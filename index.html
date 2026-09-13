@@ -113,7 +113,7 @@
     position:relative;width:100%;aspect-ratio:2/1;border-radius:var(--radius-m);
     overflow:hidden;background:var(--water);border:1px solid var(--border);cursor:crosshair;touch-action:none;
   }
-  .mapwrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  .mapwrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;}
   .maphint{
     position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.55);color:#fff;
     padding:6px 11px;border-radius:999px;font-size:12px;pointer-events:none;
@@ -124,6 +124,15 @@
     position:absolute;right:10px;top:10px;background:rgba(0,0,0,.55);color:#fff;border:none;
     border-radius:10px;padding:8px 10px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;
   }
+  .zoomctrl{
+    position:absolute;right:10px;bottom:10px;z-index:2;display:flex;flex-direction:column;gap:6px;
+  }
+  .zoomctrl button{
+    background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:10px;
+    width:40px;height:40px;font-size:19px;line-height:1;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;padding:0;
+  }
+  .zoomctrl button:active{background:rgba(0,0,0,.75);}
   .mapwrap.fullscreen{
     position:fixed;inset:0;z-index:1000;border-radius:0;aspect-ratio:auto;border:none;
     display:flex;align-items:center;justify-content:center;background:var(--bg);
@@ -237,7 +246,7 @@
         <div class="mapwrap empty" id="mapwrap">
           <canvas id="mapCanvas"></canvas>
           <button class="fsbtn" id="fsBtn" type="button" aria-label="Volledig scherm">⤢ Vergroten</button>
-          <span class="maphint" id="mapHint">tik ergens op het vasteland</span>
+          <span class="maphint" id="mapHint">tik om te plaatsen</span>
         </div>
         <div class="legend" id="legend"></div>
       </div>
@@ -532,21 +541,184 @@
     canvas.height = Math.round(rect.height*dpr);
   }
 
-  function drawMap(canvas, pins, pending, pendingColor){
+  /* ===================== zoom/pan-view ===================== */
+  var MIN_SCALE = 1, MAX_SCALE = 64;
+  function makeMapView(){ return { scale: 1, cx: 0.5, cy: 0.5 }; }
+  function clampView(view){
+    view.scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, view.scale));
+    var half = 0.5/view.scale;
+    view.cx = Math.max(half, Math.min(1-half, view.cx));
+    view.cy = Math.max(half, Math.min(1-half, view.cy));
+  }
+
+  function drawMap(canvas, pins, pending, pendingColor, view){
+    view = view || {scale:1, cx:0.5, cy:0.5};
+    var half = 0.5/view.scale;
+    var left = view.cx-half, top = view.cy-half, size = 2*half;
     var ctx = canvas.getContext("2d");
     ctx.imageSmoothingEnabled = true;
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.drawImage(dataCanvas, 0,0,GRID_COLS,GRID_ROWS, 0,0,canvas.width,canvas.height);
-    function toXY(lat,lon){ return [ (lon+180)/360*canvas.width, (90-lat)/180*canvas.height ]; }
+    ctx.drawImage(dataCanvas, left*GRID_COLS, top*GRID_ROWS, size*GRID_COLS, size*GRID_ROWS, 0,0,canvas.width,canvas.height);
+    function toXY(lat,lon){
+      var fx = (lon+180)/360, fy = (90-lat)/180;
+      return [ (fx-left)/size*canvas.width, (fy-top)/size*canvas.height ];
+    }
     function pin(lat,lon,color,r){
       var xy = toXY(lat,lon);
       ctx.beginPath(); ctx.arc(xy[0], xy[1], r, 0, Math.PI*2);
       ctx.fillStyle = color; ctx.fill();
       ctx.lineWidth = Math.max(1.5, r*0.28); ctx.strokeStyle = "#fff"; ctx.stroke();
     }
-    var rdot = Math.max(4, canvas.width*0.006);
+    var rdot = Math.max(4, canvas.width*0.006/Math.sqrt(view.scale));
     if (pins) for (var i=0;i<pins.length;i++) pin(pins[i].lat, pins[i].lon, pins[i].color, rdot);
     if (pending) pin(pending.lat, pending.lon, pendingColor||"#fff", rdot*1.6);
+  }
+
+  /* Sleep/knijp/scroll om in en uit te zoomen op een kaart, en te slepen om te pannen.
+     Werkt via Pointer Events zodat muis, touch en pen dezelfde code delen. */
+  function attachMapInteractions(canvasEl, view, opts){
+    opts = opts || {};
+    var pointers = {};
+    var dragStart = null, pinchStart = null, moved = false;
+    var TAP_PX = 8;
+
+    function localPoint(clientX, clientY){
+      var rect = canvasEl.getBoundingClientRect();
+      return { x: clientX-rect.left, y: clientY-rect.top, rect: rect };
+    }
+    function screenToWorld(pt, v){
+      var half = 0.5/v.scale;
+      return {
+        fx: (v.cx-half) + (pt.x/pt.rect.width)*(2*half),
+        fy: (v.cy-half) + (pt.y/pt.rect.height)*(2*half)
+      };
+    }
+    function recenterOn(pt, focal, v){
+      var half = 0.5/v.scale;
+      v.cx = focal.fx - (pt.x/pt.rect.width - 0.5)*(2*half);
+      v.cy = focal.fy - (pt.y/pt.rect.height - 0.5)*(2*half);
+      clampView(v);
+    }
+
+    canvasEl.addEventListener("pointerdown", function(ev){
+      if (canvasEl.setPointerCapture) { try{ canvasEl.setPointerCapture(ev.pointerId); }catch(e){} }
+      pointers[ev.pointerId] = {x: ev.clientX, y: ev.clientY};
+      var ids = Object.keys(pointers);
+      moved = false;
+      if (ids.length === 1){
+        dragStart = { x: ev.clientX, y: ev.clientY, cx: view.cx, cy: view.cy };
+        pinchStart = null;
+      } else if (ids.length === 2){
+        dragStart = null;
+        var pts = ids.map(function(id){ return pointers[id]; });
+        var dist = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y);
+        var midX = (pts[0].x+pts[1].x)/2, midY = (pts[0].y+pts[1].y)/2;
+        var w = screenToWorld(localPoint(midX,midY), view);
+        pinchStart = { dist: dist||1, scale: view.scale, fx: w.fx, fy: w.fy };
+      }
+    });
+
+    canvasEl.addEventListener("pointermove", function(ev){
+      if (!pointers[ev.pointerId]) return;
+      pointers[ev.pointerId] = {x: ev.clientX, y: ev.clientY};
+      var ids = Object.keys(pointers);
+      if (ids.length === 1 && dragStart){
+        var dx = ev.clientX-dragStart.x, dy = ev.clientY-dragStart.y;
+        if (Math.abs(dx)>TAP_PX || Math.abs(dy)>TAP_PX) moved = true;
+        var rect = canvasEl.getBoundingClientRect();
+        var half = 0.5/view.scale;
+        view.cx = dragStart.cx - (dx/rect.width)*(2*half);
+        view.cy = dragStart.cy - (dy/rect.height)*(2*half);
+        clampView(view);
+        opts.onChange && opts.onChange();
+      } else if (ids.length === 2 && pinchStart){
+        moved = true;
+        var pts = ids.map(function(id){ return pointers[id]; });
+        var dist = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y);
+        view.scale = pinchStart.scale * (dist/pinchStart.dist);
+        clampView(view);
+        var midX = (pts[0].x+pts[1].x)/2, midY = (pts[0].y+pts[1].y)/2;
+        recenterOn(localPoint(midX,midY), {fx:pinchStart.fx, fy:pinchStart.fy}, view);
+        opts.onChange && opts.onChange();
+      }
+    });
+
+    function onUp(ev){
+      var wasSingle = Object.keys(pointers).length === 1;
+      delete pointers[ev.pointerId];
+      var ids = Object.keys(pointers);
+      if (ids.length < 2) pinchStart = null;
+      if (ids.length === 0){
+        if (!moved && wasSingle && opts.onTap) opts.onTap(ev.clientX, ev.clientY);
+        dragStart = null; moved = false;
+      } else if (ids.length === 1){
+        var id = ids[0];
+        dragStart = { x: pointers[id].x, y: pointers[id].y, cx: view.cx, cy: view.cy };
+      }
+    }
+    canvasEl.addEventListener("pointerup", onUp);
+    canvasEl.addEventListener("pointercancel", onUp);
+
+    canvasEl.addEventListener("wheel", function(ev){
+      ev.preventDefault();
+      var pt = localPoint(ev.clientX, ev.clientY);
+      var before = screenToWorld(pt, view);
+      view.scale = view.scale * Math.exp(-ev.deltaY*0.0015);
+      clampView(view);
+      recenterOn(pt, before, view);
+      opts.onChange && opts.onChange();
+    }, {passive:false});
+
+    canvasEl.addEventListener("dblclick", function(ev){
+      var pt = localPoint(ev.clientX, ev.clientY);
+      var before = screenToWorld(pt, view);
+      view.scale = view.scale * 2.5;
+      clampView(view);
+      recenterOn(pt, before, view);
+      opts.onChange && opts.onChange();
+    });
+  }
+
+  /* In volledig-scherm-modus vult de wrap de hele viewport, maar de kaart zelf
+     kan smaller/lager zijn (letterboxed) — hang de knoppen dan tegen de echte
+     kaartrand aan in plaats van tegen de viewportrand. */
+  function positionOverlays(wrapEl, canvasEl){
+    var zc = wrapEl.querySelector(".zoomctrl");
+    var fs = wrapEl.querySelector(".fsbtn");
+    if (!wrapEl.classList.contains("fullscreen")){
+      if (zc){ zc.style.right=""; zc.style.bottom=""; }
+      if (fs){ fs.style.right=""; fs.style.top=""; }
+      return;
+    }
+    var wrapRect = wrapEl.getBoundingClientRect();
+    var canRect = canvasEl.getBoundingClientRect();
+    var rightGap = Math.max(0, wrapRect.right-canRect.right);
+    var bottomGap = Math.max(0, wrapRect.bottom-canRect.bottom);
+    var topGap = Math.max(0, canRect.top-wrapRect.top);
+    if (zc){ zc.style.right = (rightGap+10)+"px"; zc.style.bottom = (bottomGap+10)+"px"; }
+    if (fs){ fs.style.right = (rightGap+10)+"px"; fs.style.top = (topGap+10)+"px"; }
+  }
+
+  function addZoomButtons(wrapEl, view, onChange){
+    var box = document.createElement("div");
+    box.className = "zoomctrl";
+    function btn(label, aria, fn){
+      var b = document.createElement("button");
+      b.type = "button"; b.textContent = label; b.setAttribute("aria-label", aria);
+      b.addEventListener("click", fn);
+      box.appendChild(b);
+      return b;
+    }
+    btn("+", "Inzoomen", function(){
+      view.scale = view.scale*1.7; clampView(view); onChange();
+    });
+    btn("−", "Uitzoomen", function(){
+      view.scale = view.scale/1.7; clampView(view); onChange();
+    });
+    btn("⤾", "Volledige kaart tonen", function(){
+      view.scale = 1; view.cx = 0.5; view.cy = 0.5; onChange();
+    });
+    wrapEl.appendChild(box);
   }
 
   /* ===================== legende ===================== */
@@ -698,18 +870,23 @@
     updateLockUI();
   }
 
+  var studentView = makeMapView();
+
   function renderStudentMap(){
     setupCanvas(mapCanvas);
     var pendingDot = (pending && pending.zoneKey!==0) ? {lat:pending.lat, lon:pending.lon} : null;
-    drawMap(mapCanvas, [], pendingDot, "#ffffff");
+    drawMap(mapCanvas, [], pendingDot, "#ffffff", studentView);
     mapWrap.classList.toggle("empty", !pending);
+    positionOverlays(mapWrap, mapCanvas);
   }
 
   function placeFromEvent(clientX, clientY){
     var rect = mapCanvas.getBoundingClientRect();
     if (clientX<rect.left || clientX>rect.right || clientY<rect.top || clientY>rect.bottom) return;
-    var fx = (clientX-rect.left)/rect.width;
-    var fy = (clientY-rect.top)/rect.height;
+    var half = 0.5/studentView.scale;
+    var px = (clientX-rect.left)/rect.width, py = (clientY-rect.top)/rect.height;
+    var fx = (studentView.cx-half) + px*(2*half);
+    var fy = (studentView.cy-half) + py*(2*half);
     fx = Math.max(0, Math.min(1, fx));
     fy = Math.max(0, Math.min(1, fy));
     var lon = fx*360-180;
@@ -719,7 +896,8 @@
     renderZonePanel();
     renderStudentMap();
   }
-  mapWrap.addEventListener("click", function(ev){ placeFromEvent(ev.clientX, ev.clientY); });
+  attachMapInteractions(mapCanvas, studentView, { onTap: placeFromEvent, onChange: renderStudentMap });
+  addZoomButtons(mapWrap, studentView, renderStudentMap);
 
   naamInput.addEventListener("input", function(){ updateLockUI(); });
   try {
@@ -790,11 +968,13 @@
   renderStudentMap();
 
   /* ===================== "Klasoverzicht" ===================== */
+  var mapWrapT = document.getElementById("mapwrapT");
   var mapCanvasT = document.getElementById("mapCanvasT");
   var rooster = document.getElementById("rooster");
   var statCount = document.getElementById("statCount");
   var statZones = document.getElementById("statZones");
   var exportBtn = document.getElementById("exportBtn");
+  var teacherView = makeMapView();
 
   function zoneColorVar(k){
     return getComputedStyle(document.documentElement).getPropertyValue('--z'+k).trim();
@@ -802,8 +982,11 @@
   function renderTeacherMap(){
     setupCanvas(mapCanvasT);
     var pins = state.submissions.map(function(s){ return {lat:s.lat, lon:s.lon, color: zoneColorVar(s.zoneKey)}; });
-    drawMap(mapCanvasT, pins, null, null);
+    drawMap(mapCanvasT, pins, null, null, teacherView);
+    positionOverlays(mapWrapT, mapCanvasT);
   }
+  attachMapInteractions(mapCanvasT, teacherView, { onChange: renderTeacherMap });
+  addZoomButtons(mapWrapT, teacherView, renderTeacherMap);
   function renderRooster(){
     var submissions = state.submissions;
     if (submissions.length===0){
