@@ -978,22 +978,13 @@
           return;
         }
         var z = ZONES[String(zoneKey)];
-        var groupsInZone = {};
-        state.studenten.filter(function(s){ return s.zoneKey===String(zoneKey); }).forEach(function(s){
-          groupsInZone[s.groupNumber] = groupsInZone[s.groupNumber] || [];
-          groupsInZone[s.groupNumber].push(s.naam);
-        });
         var html = '<div class="zonecard"><div class="zonecard-head" style="background:'+z.kleur+';color:'+z.ink+';">'
           + '<span class="dot" style="background:'+z.ink+';opacity:.85;"></span><h3>'+z.naam+'</h3></div>'
-          + '<div class="zonecard-body"><p class="kenmerken">Kies een bestaande groep, of start een nieuwe.</p>'
-          + '<div class="grouplist" id="groupPicker">';
-        Object.keys(groupsInZone).sort(function(a,b){return a-b;}).forEach(function(gn){
-          html += '<div class="groupitem'+(String(selectedGroupNumber)===gn?' selected':'')+'" data-gn="'+gn+'">'
-            + '<span>Groep '+gn+'</span><span class="members">'+groupsInZone[gn].map(escapeHtml).join(", ")+'</span></div>';
-        });
-        html += '<button class="newgroupbtn" id="newGroupBtn" type="button">'+(newGroupMode?'✓ ':'')+'+ Nieuwe groep starten</button>'
-          + '</div>'
-          + '<div class="field" style="margin-top:14px;"><label for="naamInput">Jouw naam</label>'
+          + '<div class="zonecard-body"><p class="kenmerken">Vul het groepsnummer in dat op jullie briefje staat, samen met je naam.</p>'
+          + '<div class="field"><label for="groupNumberInput">Groepsnummer</label>'
+          + '<input type="number" id="groupNumberInput" min="1" step="1" inputmode="numeric" placeholder="bv. 1"></div>'
+          + '<div id="groupPreview" style="font-size:12.5px;color:var(--text-muted);min-height:18px;margin:4px 0 10px;"></div>'
+          + '<div class="field"><label for="naamInput">Jouw naam</label>'
           + '<input type="text" id="naamInput" maxlength="60" autocomplete="off" value="'+escapeHtml(ownName)+'"></div>'
           + '<button class="btn" id="confirmJoinBtn" style="margin-top:10px;" disabled>Bevestig</button>'
           + '<div class="status" id="joinStatus"></div>'
@@ -1001,34 +992,36 @@
         sidePanel.innerHTML = html;
 
         var naamInput = document.getElementById("naamInput");
+        var groupNumberInput = document.getElementById("groupNumberInput");
+        var groupPreview = document.getElementById("groupPreview");
         var confirmBtn = document.getElementById("confirmJoinBtn");
+        function updatePreview(){
+          var gn = groupNumberInput.value;
+          if (!gn || Number(gn) < 1){ groupPreview.textContent = ""; return; }
+          var members = state.studenten.filter(function(s){
+            return s.zoneKey===String(zoneKey) && String(s.groupNumber)===String(gn);
+          }).map(function(s){ return s.naam; });
+          groupPreview.textContent = members.length
+            ? ("Al geregistreerd in Groep "+gn+": "+members.join(", "))
+            : ("Groep "+gn+" is nog leeg — jij bent de eerste.");
+        }
         function updateJoinBtn(){
-          confirmBtn.disabled = !(naamInput.value.trim().length>0 && (selectedGroupNumber || newGroupMode));
+          confirmBtn.disabled = !(naamInput.value.trim().length>0 && Number(groupNumberInput.value) >= 1);
         }
         naamInput.addEventListener("input", updateJoinBtn);
-        document.getElementById("groupPicker").querySelectorAll(".groupitem").forEach(function(el){
-          el.addEventListener("click", function(){
-            selectedGroupNumber = el.getAttribute("data-gn"); newGroupMode = false;
-            renderSidePanel(zoneKey);
-          });
-        });
-        document.getElementById("newGroupBtn").addEventListener("click", function(){
-          newGroupMode = true; selectedGroupNumber = null;
-          renderSidePanel(zoneKey);
-        });
-        updateJoinBtn();
+        groupNumberInput.addEventListener("input", function(){ updatePreview(); updateJoinBtn(); });
         confirmBtn.addEventListener("click", function(){
           var naam = naamInput.value.trim();
+          var groupNumber = Number(groupNumberInput.value);
           confirmBtn.disabled = true; confirmBtn.textContent = "Bezig...";
           var slug = slugify(naam);
           apiSubmit({
             action:"joinOrCreateGroup", slug:slug, naam:naam,
-            zoneKey:String(zoneKey), groupNumber: newGroupMode ? 0 : Number(selectedGroupNumber)
+            zoneKey:String(zoneKey), groupNumber: groupNumber
           }).then(function(res){
             if (res && res.ok){
               ownName = naam; ownSlug = slug;
               try{ localStorage.setItem("klimaatkaart_naam", naam); }catch(e){}
-              newGroupMode = false; selectedGroupNumber = null;
               pollOnce();
             } else {
               document.getElementById("joinStatus").textContent = "Er ging iets mis. Probeer opnieuw.";
