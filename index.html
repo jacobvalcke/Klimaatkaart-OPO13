@@ -221,7 +221,51 @@
   }
   .apierror.show{display:block;}
 </style>
-</head>
+
+  /* ===== v3 toevoegingen: fasen, groepen, docenttoegang ===== */
+  .phasebar{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-m);
+    padding:10px 14px; margin-bottom:14px; font-size:13px; color:var(--text-muted);
+  }
+  .phasebar b{color:var(--text);}
+  .grouplist{display:flex; flex-direction:column; gap:8px; margin:10px 0;}
+  .groupitem{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    border:1px solid var(--border); border-radius:var(--radius-s); padding:9px 12px;
+    background:var(--surface); cursor:pointer;
+  }
+  .groupitem:hover{border-color:var(--accent);}
+  .groupitem.selected{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 10%, transparent);}
+  .groupitem .members{font-size:12px; color:var(--text-muted);}
+  .newgroupbtn{
+    border:1px dashed var(--border); border-radius:var(--radius-s); padding:9px 12px;
+    background:transparent; color:var(--accent-strong); font:inherit; cursor:pointer; text-align:left;
+  }
+  textarea.groupanswer{
+    width:100%; min-height:120px; border-radius:var(--radius-s); border:1px solid var(--border);
+    padding:10px; font:inherit; font-size:13.5px; background:var(--surface); color:var(--text); resize:vertical;
+  }
+  .waitcard{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-m);
+    padding:18px; text-align:center; color:var(--text-muted); font-size:14px;
+  }
+  .docentgate{max-width:360px; margin:60px auto; text-align:center;}
+  .docentgate input{
+    width:100%; padding:10px 12px; border-radius:var(--radius-s); border:1px solid var(--border);
+    font:inherit; margin:12px 0;
+  }
+  .phasebtns{display:flex; flex-direction:column; gap:8px; margin:14px 0;}
+  .phasebtns button{
+    text-align:left; padding:10px 14px; border-radius:var(--radius-s); border:1px solid var(--border);
+    background:var(--surface); font:inherit; font-size:13.5px; cursor:pointer;
+  }
+  .phasebtns button.current{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, transparent); font-weight:600;}
+  .phasebtns button:disabled{opacity:.45; cursor:default;}
+  .zonesummary{display:flex; flex-direction:column; gap:6px; margin-top:10px;}
+  .zonesummary .row{display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid var(--border);}
+  .exportbtns{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;}
+</style>
 <body>
 <div class="app">
 
@@ -229,67 +273,67 @@
     <div class="brand">
       <span class="eyebrow">OPO13 — Inleiding in de Bouwtechnieken</span>
       <h1>Klimaatkaart</h1>
-      <p>Plaats je woning op de wereldkaart en ontdek in welke klimaatzone ze komt te staan — en welke ontwerpbeslissingen dat met zich meebrengt.</p>
+      <p id="topSubtitle">Vorm een groep rond je klimaatzone en denk samen na over de klimaateigenschappen die je ontwerp beïnvloeden.</p>
     </div>
     <div class="modeswitch" role="tablist" aria-label="Weergave">
-      <button id="tab-student" class="active" role="tab" aria-selected="true">Plaats je woning</button>
-      <button id="tab-docent" role="tab" aria-selected="false">Klasoverzicht</button>
+      <button id="tab-student" class="active" role="tab" aria-selected="true">Studenten</button>
+      <button id="tab-docent" role="tab" aria-selected="false">Docent</button>
     </div>
   </div>
 
   <div class="apierror" id="apiError">De verbinding met de gedeelde gegevens lukt niet. Herlaad de pagina, of controleer je internetverbinding.</div>
 
-  <!-- ================= PLAATS JE WONING ================= -->
+  <!-- ================= STUDENTEN ================= -->
   <div id="view-student" class="view active">
+    <div class="phasebar" id="phaseBar"></div>
     <div class="layout">
       <div class="panel mapcard">
         <div class="mapwrap empty" id="mapwrap">
           <canvas id="mapCanvas"></canvas>
           <button class="fsbtn" id="fsBtn" type="button" aria-label="Volledig scherm">⤢ Vergroten</button>
-          <span class="maphint" id="mapHint">tik om te plaatsen</span>
+          <span class="maphint" id="mapHint">tik op je klimaatzone</span>
         </div>
         <div class="legend" id="legend"></div>
       </div>
 
       <div class="side">
-        <div class="panel">
-          <div class="lockbanner" id="lockBanner">De bevraging is vergrendeld door de docent — plaatsingen kunnen momenteel niet meer aangepast worden.</div>
-          <div class="field">
-            <label for="naam">Jouw naam</label>
-            <input type="text" id="naam" maxlength="60" autocomplete="off" placeholder="Voor- en achternaam">
-          </div>
-          <div id="zoneSlot">
-            <div class="placeholder" id="zonePlaceholder">Tik op de kaart om een locatie te kiezen.</div>
-          </div>
-          <button class="btn" id="plaatsBtn" disabled style="margin-top:14px;">Plaats je woning</button>
-          <div class="status" id="statusMsg"></div>
+        <div class="panel" id="sidePanel" style="padding:18px;">
+          <!-- wordt dynamisch gevuld afhankelijk van fase en registratiestatus -->
         </div>
       </div>
     </div>
-    <footer class="note">Klimaatindeling gebaseerd op de Köppen-Geiger klimaatclassificatie, vereenvoudigd tot zes ontwerprelevante zones. Je kan je plaatsing op elk moment aanpassen door opnieuw te tikken en te bevestigen — je vorige plaatsing wordt dan vervangen. Bekijk bij "Klasoverzicht" welke plekken je medestudenten al gekozen hebben.</footer>
   </div>
 
-  <!-- ================= KLASOVERZICHT ================= -->
+  <!-- ================= DOCENT ================= -->
   <div id="view-docent" class="view">
-    <div class="teacher-top">
-      <div style="display:flex;gap:26px;">
-        <div class="stat"><span class="n mono" id="statCount">0</span><span class="l">woningen geplaatst</span></div>
-        <div class="stat"><span class="n mono" id="statZones">0</span><span class="l">klimaatzones in gebruik</span></div>
-      </div>
+    <div class="docentgate panel" id="docentGate">
+      <h2 style="margin-bottom:8px;">Docenttoegang</h2>
+      <p style="color:var(--text-muted); font-size:13.5px;">Vul de docentcode in (tabblad "Instellingen", cel B2, in de gekoppelde Google Sheet).</p>
+      <input type="password" id="docentCodeInput" placeholder="Docentcode" autocomplete="off">
+      <button class="btn" id="docentLoginBtn" style="width:100%;">Ontgrendelen</button>
+      <div class="status" id="docentLoginStatus"></div>
     </div>
-    <div class="layout">
-      <div class="panel mapcard">
-        <div class="mapwrap" id="mapwrapT" style="cursor:default;">
-          <canvas id="mapCanvasT"></canvas>
+
+    <div id="docentContent" style="display:none;">
+      <div class="phasebtns panel" id="phaseButtons" style="padding:14px 18px;"></div>
+      <div class="layout">
+        <div class="panel mapcard">
+          <div class="mapwrap" id="mapwrapT" style="cursor:default;">
+            <canvas id="mapCanvasT"></canvas>
+          </div>
+          <div class="legend" id="legendT"></div>
         </div>
-        <div class="legend" id="legendT"></div>
-      </div>
-      <div class="panel" style="padding:18px;">
-        <h3 style="font-size:13.5px;margin-bottom:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Live overzicht</h3>
-        <div class="rooster" id="rooster"><div class="rooster-empty">Nog geen inzendingen.</div></div>
-        <div class="teachernote">
-          <button class="btn secondary" id="exportBtn" type="button">Exporteer huidige lijst (.csv)</button>
-          <span>Voor de docent: beheer (aanpassen, verwijderen, vergrendelen) gebeurt rechtstreeks in de gekoppelde Google Sheet — niet in deze pagina.</span>
+        <div class="panel" style="padding:18px;">
+          <h3 style="font-size:13.5px;margin-bottom:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Groepen per klimaatzone</h3>
+          <div class="zonesummary" id="zoneSummary"></div>
+
+          <h3 style="font-size:13.5px;margin:18px 0 10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;display:none;" id="groupAnswersHeading">Groepsantwoorden</h3>
+          <div id="groupAnswers"></div>
+
+          <div class="exportbtns">
+            <button class="btn secondary" id="exportGroepenBtn" type="button">Exporteer groepsantwoorden (.xlsx)</button>
+            <button class="btn secondary" id="exportStudentenBtn" type="button">Exporteer studentenlijst (.xlsx)</button>
+          </div>
         </div>
       </div>
     </div>
@@ -297,20 +341,29 @@
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 (function(){
   "use strict";
 
   /* =====================================================================
      Vul hieronder de URL van je gepubliceerde Google Apps Script Web App in
-     (eindigt op /exec). Zie de meegeleverde instructies om die te maken.
+     (eindigt op /exec). Na het vervangen van Code.gs: Implementeren >
+     Implementaties beheren > potloodicoon > Nieuwe versie, anders blijft
+     deze link het oude scriptgedrag gebruiken.
      ===================================================================== */
   var API_URL = "https://script.google.com/macros/s/AKfycbyFrcLhY7033C0kgMAL7sHsUW_iDc-u2L_w3K8imdk2LJ69nx6X285JgISxJ60nthzeBQ/exec";
   var POLL_MS = 6000;
 
-  /* ===================== DATA: klimaatzones ===================== */
+  /* ===================== DATA: klimaatzones =====================
+     De zone-indeling zelf (geografische begrenzing, vereenvoudigd Köppen-Geiger)
+     is GEEN leerstof — enkel een praktisch hulpmiddel om op de kaart te klikken.
+     De "macroklimaat"-duiding en de ontwerpbeslissingen zijn wel gegrond in
+     het macro/meso/microklimaat-kader uit Les 2 (Concept) en de comfortbegrippen
+     uit Les 6 (Comfort). */
   var ZONES = {
     "1": { naam:"Tropisch", kleur:"var(--z1)", ink:"var(--z1-ink)",
+      macroklimaat:"Lage breedtegraad: de zon staat het hele jaar hoog, wat zorgt voor veel en gelijkmatige zonnestraling. Dit gebied ligt bovendien in de zone waar vochtige lucht van beide halfronden samenkomt (intertropische convergentiezone), wat de hoge neerslag verklaart.",
       kenmerken:"Hoge en gelijkmatige temperaturen (25–32°C) het hele jaar door, hoge luchtvochtigheid en veel neerslag — zoals het Amazonebekken, Midden-Afrika of Zuidoost-Azië.",
       decisions:[
         ["Openingen & oriëntatie","Grote, goed geventileerde openingen; bescherm ze met brede overstekken en luifels tegen felle, hoogstaande zon."],
@@ -319,6 +372,7 @@
         ["Dak","Sterk hellend dak met grote overstekken voor regenafvoer en schaduw; hoge nokhoogte laat warme lucht opstijgen en afvoeren."]
       ]},
     "2": { naam:"Droog", kleur:"var(--z2)", ink:"var(--z2-ink)",
+      macroklimaat:"Ligt vaak in de subtropische hogedrukgordel, waar dalende luchtstromen uitdrogen, of ver landinwaarts (grote afstand tot de oceaan). Beide macro-factoren verklaren de lage neerslag en de grote dagelijkse temperatuurschommeling (geen vochtige lucht om warmte vast te houden).",
       kenmerken:"Weinig neerslag en een extreme temperatuurschommeling tussen dag en nacht — zoals de Sahara, het Arabisch Schiereiland of het binnenland van Australië.",
       decisions:[
         ["Openingen & oriëntatie","Kleine, hoog geplaatste openingen, geconcentreerd op één beschutte gevel om zoninval te beperken."],
@@ -327,6 +381,7 @@
         ["Buitenruimte","Een binnenkoer of patio als beschaduwde, koelere buitenruimte en luchtbuffer."]
       ]},
     "3": { naam:"Mediterraan", kleur:"var(--z3)", ink:"var(--z3-ink)",
+      macroklimaat:"Ligt op de overgang tussen de droge subtropische hogedrukgordel ('s zomers dominant, vandaar de droge, hete zomers) en de gematigde westenwindzone ('s winters dominant, vandaar de nattere, mildere winters).",
       kenmerken:"Droge, hete zomers tegenover milde, nattere winters — zoals Zuid-Europa, delen van Californië, Midden-Chili of het zuidwesten van Zuid-Afrika.",
       decisions:[
         ["Openingen & oriëntatie","Zuidgerichte openingen met horizontale zonwering: laat de lage winterzon toe, weer de hoge zomerzon; beperk grote openingen op het westen."],
@@ -334,6 +389,7 @@
         ["Ventilatie","Voorzie goede dwarsventilatie en lichte kleuren voor de warme, droge zomers."]
       ]},
     "4": { naam:"Gematigd", kleur:"var(--z4)", ink:"var(--z4-ink)",
+      macroklimaat:"Ligt in de gematigde westenwindzone, meestal dicht bij een oceaan. Die oceaannabijheid (zeeklimaat) dempt temperatuurschommelingen en spreidt de neerslag over het hele jaar — zoals besproken voor België in Les 6.",
       kenmerken:"Milde temperaturen en neerslag verspreid over het hele jaar, zonder uitgesproken droog seizoen — zoals West-Europa, met inbegrip van Brussel, of Nieuw-Zeeland.",
       decisions:[
         ["Openingen & oriëntatie","Benut zoninval maximaal voor passieve verwarming, vooral op de zuidgevel."],
@@ -341,6 +397,7 @@
         ["Detaillering","Zorgvuldige detaillering tegen slagregen en vocht: waterkering, druiplijsten, ventilerende spouw."]
       ]},
     "5": { naam:"Continentaal", kleur:"var(--z5)", ink:"var(--z5-ink)",
+      macroklimaat:"Ligt ver van een oceaan (grote continentaliteit): zonder de dempende invloed van een grote watermassa is het temperatuurverschil tussen zomer en winter — en dus ook de jaarlijkse schommeling — veel groter dan in een zeeklimaat.",
       kenmerken:"Lange, koude winters en een grote jaarlijkse temperatuurschommeling — zoals Oost-Europa, Canada, Siberië, en kustklimaten op hoge breedte zoals IJsland.",
       decisions:[
         ["Vorm & massa","Compacte, gedrongen vorm met een lage verhouding schiloppervlak/volume om warmteverlies te minimaliseren."],
@@ -349,6 +406,7 @@
         ["Schil","Sterk geïsoleerde, luchtdichte gebouwschil."]
       ]},
     "6": { naam:"Polair", kleur:"var(--z6)", ink:"var(--z6-ink)",
+      macroklimaat:"Zeer hoge breedtegraad: de zon staat het hele jaar laag (of blijft in de winter grotendeels onder de horizon), waardoor de zonnestraling — en dus de opwarming van het aardoppervlak — minimaal blijft.",
       kenmerken:"Zeer lage temperaturen het hele jaar door, met een korte of afwezige zomer — zoals Antarctica, het noorden van Canada, Groenland of hooggebergte.",
       decisions:[
         ["Vorm & massa","Zeer compacte vorm met minimale schiloppervlakte; kleine, goed beschutte openingen."],
@@ -359,7 +417,6 @@
   };
   var ZONE_ORDER = ["1","2","3","4","5","6"];
 
-  /* ===================== DATA: steden (herkenningspunten) ===================== */
   var CITIES = [
 ["Brussel","België",50.85,4.35],["Amsterdam","Nederland",52.37,4.90],["Londen","Verenigd Koninkrijk",51.51,-0.13],
 ["Parijs","Frankrijk",48.85,2.35],["Berlijn","Duitsland",52.52,13.40],["Madrid","Spanje",40.42,-3.70],
@@ -735,12 +792,10 @@
       el.appendChild(item);
     });
   }
-  buildLegend(document.getElementById("legend"));
-  buildLegend(document.getElementById("legendT"));
-
+  /* buildLegend() wordt verderop expliciet aangeroepen voor #legend en #legendT */
   /* ===================== slug helper ===================== */
   function slugify(s){
-    s = s.normalize("NFD").replace(/[̀-ͯ]/g,"");
+    s = s.normalize("NFD").replace(/[\u0300-\u036f]/g,"");
     s = s.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
     return s.slice(0,80) || ("student-"+Math.random().toString(36).slice(2,8));
   }
@@ -754,53 +809,51 @@
   var apiErrorEl = document.getElementById("apiError");
   var apiConfigured = API_URL.indexOf("PLAK_HIER") === -1 && API_URL.length > 0;
   var apiOk = true;
-
   function showApiError(show){
     apiOk = !show;
     apiErrorEl.classList.toggle("show", !!show);
   }
 
-  function apiGet(){
-    if (!apiConfigured) return Promise.resolve({locked:false, submissions:[]});
-    return fetch(API_URL, {method:"GET"}).then(function(r){
+  function apiGet(params){
+    if (!apiConfigured) return Promise.resolve({fase:0, isDocent:false, studenten:[], groepen:[]});
+    var qs = Object.keys(params||{}).filter(function(k){return params[k];}).map(function(k){
+      return encodeURIComponent(k)+"="+encodeURIComponent(params[k]);
+    }).join("&");
+    return fetch(API_URL + (qs?("?"+qs):""), {method:"GET"}).then(function(r){
       if (!r.ok) throw new Error("http "+r.status);
       return r.json();
-    }).then(function(data){
-      showApiError(false);
-      return data;
-    }).catch(function(err){
-      showApiError(true);
-      throw err;
-    });
+    }).then(function(data){ showApiError(false); return data; })
+      .catch(function(err){ showApiError(true); throw err; });
   }
-
   function apiSubmit(payload){
     if (!apiConfigured) return Promise.resolve({ok:false, error:"not_configured"});
     return fetch(API_URL, {
-      method:"POST",
-      headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body: JSON.stringify(payload)
+      method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(payload)
     }).then(function(r){
       if (!r.ok) throw new Error("http "+r.status);
       return r.json();
-    }).then(function(data){
-      showApiError(false);
-      return data;
-    }).catch(function(err){
-      showApiError(true);
-      throw err;
-    });
+    }).then(function(data){ showApiError(false); return data; })
+      .catch(function(err){ showApiError(true); throw err; });
   }
 
-  var state = { locked:false, submissions:[] };
+  /* ===================== lokale identiteit ===================== */
+  var ownName = "", ownSlug = "";
+  try { ownName = localStorage.getItem("klimaatkaart_naam") || ""; } catch(e){}
+  try { ownSlug = ownName ? slugify(ownName) : ""; } catch(e){}
+  var docentCode = "";
+  try { docentCode = localStorage.getItem("klimaatkaart_docentcode") || ""; } catch(e){}
+
+  var state = { fase:0, isDocent:false, studenten:[], groepen:[] };
   var stateListeners = [];
   function onStateChange(fn){ stateListeners.push(fn); }
   function pollOnce(){
-    return apiGet().then(function(data){
-      state.locked = !!data.locked;
-      state.submissions = data.submissions || [];
+    return apiGet({ slug: ownSlug, docent: docentCode }).then(function(data){
+      state.fase = data.fase || 0;
+      state.isDocent = !!data.isDocent;
+      state.studenten = data.studenten || [];
+      state.groepen = data.groepen || [];
       stateListeners.forEach(function(fn){ fn(state); });
-    }).catch(function(){ /* fout is al zichtbaar via apiError-balk */ });
+    }).catch(function(){ /* fout al zichtbaar via apiError-balk */ });
   }
   var pollTimer = null;
   function startPolling(){
@@ -825,62 +878,44 @@
     renderStudentMap();
   });
 
-  /* ===================== "Plaats je woning" ===================== */
+  /* ===================== STUDENTENKAART ===================== */
   var mapCanvas = document.getElementById("mapCanvas");
   var mapWrap = document.getElementById("mapwrap");
-  var naamInput = document.getElementById("naam");
-  var plaatsBtn = document.getElementById("plaatsBtn");
-  var statusMsg = document.getElementById("statusMsg");
-  var zoneSlot = document.getElementById("zoneSlot");
-  var lockBanner = document.getElementById("lockBanner");
-
-  var pending = null;
-  var hasExistingSubmission = false;
-
-  function canSubmit(){
-    return !state.locked && !!pending && pending.zoneKey!==0 && naamInput.value.trim().length>0;
-  }
-  function updateLockUI(){
-    lockBanner.classList.toggle("show", state.locked);
-    plaatsBtn.disabled = !canSubmit();
-    if (state.locked) plaatsBtn.textContent = "Vergrendeld";
-    else plaatsBtn.textContent = hasExistingSubmission ? "Werk je plaatsing bij" : "Plaats je woning";
-  }
-
-  function renderZonePanel(){
-    if (!pending){
-      zoneSlot.innerHTML = '<div class="placeholder">Tik op de kaart om een locatie te kiezen.</div>';
-      updateLockUI(); return;
-    }
-    if (pending.zoneKey === 0){
-      zoneSlot.innerHTML = '<div class="placeholder">Dat is water. Tik ergens op het vasteland waar je je woning wil bouwen.</div>';
-      updateLockUI(); return;
-    }
-    var z = ZONES[String(pending.zoneKey)];
-    zoneSlot.innerHTML = '<div class="zonecard">'
-      + '<div class="zonecard-head" style="background:'+z.kleur+';color:'+z.ink+';">'
-      + '<span class="dot" style="background:'+z.ink+';opacity:.85;"></span>'
-      + '<h3>'+z.naam+'</h3></div>'
-      + '<div class="zonecard-body">'
-      + '<div class="loc">'+locationLabel(pending.lat,pending.lon)+' · '+fmtCoord(pending.lat,pending.lon)+'</div>'
-      + '<p class="kenmerken">'+z.kenmerken+'</p>'
-      + '<ul class="decisions">'
-      + z.decisions.map(function(d){return '<li><span class="k">'+d[0]+'</span><span class="v">'+d[1]+'</span></li>';}).join("")
-      + '</ul></div></div>';
-    updateLockUI();
-  }
+  var mapHint = document.getElementById("mapHint");
+  var sidePanel = document.getElementById("sidePanel");
+  var phaseBar = document.getElementById("phaseBar");
 
   var studentView = makeMapView();
+  var tappedPoint = null;   // {lat,lon,zoneKey} — laatst getikt punt (zone-selectie of unit-plaatsing)
+  var newGroupMode = false;
+  var selectedGroupNumber = null;
+
+  function ownRecord(){
+    if (!ownSlug) return null;
+    return state.studenten.filter(function(s){ return s.slug === ownSlug; })[0] || null;
+  }
 
   function renderStudentMap(){
     setupCanvas(mapCanvas);
-    var pendingDot = (pending && pending.zoneKey!==0) ? {lat:pending.lat, lon:pending.lon} : null;
-    drawMap(mapCanvas, [], pendingDot, "#ffffff", studentView);
-    mapWrap.classList.toggle("empty", !pending);
+    var pins = [];
+    if (state.fase === 4){
+      // iedereen ziet alle locaties, eigen locatie in een andere kleur
+      state.studenten.forEach(function(s){
+        if (s.lat==null || s.lon==null) return;
+        pins.push({ lat:s.lat, lon:s.lon, color: s.slug===ownSlug ? "#ffffff" : zoneColorVar(s.zoneKey) });
+      });
+    }
+    var pendingDot = tappedPoint && tappedPoint.zoneKey !== 0 ? {lat:tappedPoint.lat, lon:tappedPoint.lon} : null;
+    drawMap(mapCanvas, pins, pendingDot, "#ffffff", studentView);
+    mapWrap.classList.toggle("empty", pins.length===0 && !pendingDot);
     positionOverlays(mapWrap, mapCanvas);
   }
 
-  function placeFromEvent(clientX, clientY){
+  function zoneColorVar(k){
+    return getComputedStyle(document.documentElement).getPropertyValue('--z'+k).trim();
+  }
+
+  function placeFromEvent(clientX, clientY, onZone){
     var rect = mapCanvas.getBoundingClientRect();
     if (clientX<rect.left || clientX>rect.right || clientY<rect.top || clientY>rect.bottom) return;
     var half = 0.5/studentView.scale;
@@ -892,143 +927,378 @@
     var lon = fx*360-180;
     var lat = 90-fy*180;
     var zoneKey = climateAt(lat,lon);
-    pending = {lat:lat, lon:lon, zoneKey:zoneKey};
-    renderZonePanel();
+    tappedPoint = {lat:lat, lon:lon, zoneKey:zoneKey};
     renderStudentMap();
+    onZone(zoneKey, lat, lon);
   }
-  attachMapInteractions(mapCanvas, studentView, { onTap: placeFromEvent, onChange: renderStudentMap });
+  attachMapInteractions(mapCanvas, studentView, {
+    onTap: function(x,y){ placeFromEvent(x,y, handleMapTap); },
+    onChange: renderStudentMap
+  });
   addZoomButtons(mapWrap, studentView, renderStudentMap);
 
-  naamInput.addEventListener("input", function(){ updateLockUI(); });
-  try {
-    var savedName = localStorage.getItem("klimaatkaart_naam");
-    if (savedName) naamInput.value = savedName;
-  } catch(e){}
-
-  function showStatus(msg, kind){
-    statusMsg.textContent = msg;
-    statusMsg.className = "status show "+kind;
-  }
-
-  function checkExistingSubmission(){
-    var naam = naamInput.value.trim();
-    if (!naam || pending) return;
-    var slug = slugify(naam);
-    var found = state.submissions.filter(function(s){ return s.slug===slug; })[0];
-    if (found){
-      pending = {lat:found.lat, lon:found.lon, zoneKey: parseInt(found.zoneKey,10)||0};
-      hasExistingSubmission = true;
-      renderZonePanel();
+  function handleMapTap(zoneKey, lat, lon){
+    if (zoneKey === 0){
+      // in het water getikt: deselecteert
+      tappedPoint = null;
+      newGroupMode = false; selectedGroupNumber = null;
       renderStudentMap();
+      renderSidePanel();
+      return;
+    }
+    if (state.fase === 0 && !ownRecord()){
+      renderSidePanel(zoneKey);
+    } else if (state.fase === 2){
+      renderSidePanel(zoneKey);
+    } else if (state.fase === 3 && ownRecord()){
+      pendingPlacement = {lat:lat, lon:lon, zoneKey:zoneKey};
+      renderSidePanel();
     }
   }
+
+  var pendingPlacement = null;
+
+  /* ===================== zijpaneel per fase ===================== */
+  function fasenaam(f){
+    return ["Groepen vormen","Bespreking afgerond","Klimaateigenschappen","Plaatsen van unit","Locatie vastgelegd"][f] || "";
+  }
+
+  function renderSidePanel(justClickedZone){
+    var f = state.fase;
+    phaseBar.innerHTML = "Fase: <b>"+fasenaam(f)+"</b>";
+
+    var mine = ownRecord();
+
+    // ---- FASE 0: groepen vormen ----
+    if (f === 0){
+      if (!mine){
+        mapHint.textContent = "tik op je toegewezen klimaatzone";
+        var zoneKey = justClickedZone || (tappedPoint && tappedPoint.zoneKey);
+        if (!zoneKey){
+          sidePanel.innerHTML = '<div class="placeholder">Tik op de kaart op de klimaatzone die je kreeg toegewezen.</div>';
+          return;
+        }
+        var z = ZONES[String(zoneKey)];
+        var groupsInZone = {};
+        state.studenten.filter(function(s){ return s.zoneKey===String(zoneKey); }).forEach(function(s){
+          groupsInZone[s.groupNumber] = groupsInZone[s.groupNumber] || [];
+          groupsInZone[s.groupNumber].push(s.naam);
+        });
+        var html = '<div class="zonecard"><div class="zonecard-head" style="background:'+z.kleur+';color:'+z.ink+';">'
+          + '<span class="dot" style="background:'+z.ink+';opacity:.85;"></span><h3>'+z.naam+'</h3></div>'
+          + '<div class="zonecard-body"><p class="kenmerken">Kies een bestaande groep, of start een nieuwe.</p>'
+          + '<div class="grouplist" id="groupPicker">';
+        Object.keys(groupsInZone).sort(function(a,b){return a-b;}).forEach(function(gn){
+          html += '<div class="groupitem'+(String(selectedGroupNumber)===gn?' selected':'')+'" data-gn="'+gn+'">'
+            + '<span>Groep '+gn+'</span><span class="members">'+groupsInZone[gn].map(escapeHtml).join(", ")+'</span></div>';
+        });
+        html += '<button class="newgroupbtn" id="newGroupBtn" type="button">'+(newGroupMode?'✓ ':'')+'+ Nieuwe groep starten</button>'
+          + '</div>'
+          + '<div class="field" style="margin-top:14px;"><label for="naamInput">Jouw naam</label>'
+          + '<input type="text" id="naamInput" maxlength="60" autocomplete="off" value="'+escapeHtml(ownName)+'"></div>'
+          + '<button class="btn" id="confirmJoinBtn" style="margin-top:10px;" disabled>Bevestig</button>'
+          + '<div class="status" id="joinStatus"></div>'
+          + '</div></div>';
+        sidePanel.innerHTML = html;
+
+        var naamInput = document.getElementById("naamInput");
+        var confirmBtn = document.getElementById("confirmJoinBtn");
+        function updateJoinBtn(){
+          confirmBtn.disabled = !(naamInput.value.trim().length>0 && (selectedGroupNumber || newGroupMode));
+        }
+        naamInput.addEventListener("input", updateJoinBtn);
+        document.getElementById("groupPicker").querySelectorAll(".groupitem").forEach(function(el){
+          el.addEventListener("click", function(){
+            selectedGroupNumber = el.getAttribute("data-gn"); newGroupMode = false;
+            renderSidePanel(zoneKey);
+          });
+        });
+        document.getElementById("newGroupBtn").addEventListener("click", function(){
+          newGroupMode = true; selectedGroupNumber = null;
+          renderSidePanel(zoneKey);
+        });
+        updateJoinBtn();
+        confirmBtn.addEventListener("click", function(){
+          var naam = naamInput.value.trim();
+          confirmBtn.disabled = true; confirmBtn.textContent = "Bezig...";
+          var slug = slugify(naam);
+          apiSubmit({
+            action:"joinOrCreateGroup", slug:slug, naam:naam,
+            zoneKey:String(zoneKey), groupNumber: newGroupMode ? 0 : Number(selectedGroupNumber)
+          }).then(function(res){
+            if (res && res.ok){
+              ownName = naam; ownSlug = slug;
+              try{ localStorage.setItem("klimaatkaart_naam", naam); }catch(e){}
+              newGroupMode = false; selectedGroupNumber = null;
+              pollOnce();
+            } else {
+              document.getElementById("joinStatus").textContent = "Er ging iets mis. Probeer opnieuw.";
+              document.getElementById("joinStatus").className = "status show warn";
+              confirmBtn.disabled = false; confirmBtn.textContent = "Bevestig";
+            }
+          });
+        });
+        return;
+      }
+      // al geregistreerd: groepsantwoord invullen
+      mapHint.textContent = "jouw klimaatzone: " + (ZONES[mine.zoneKey]||{}).naam;
+      var zEigen = ZONES[mine.zoneKey];
+      var teammates = state.studenten.filter(function(s){ return s.zoneKey===mine.zoneKey && s.groupNumber===mine.groupNumber; }).map(function(s){return s.naam;});
+      var eigenGroep = state.groepen.filter(function(g){ return g.zoneKey===mine.zoneKey && g.groupNumber===mine.groupNumber; })[0];
+      sidePanel.innerHTML = '<div class="zonecard"><div class="zonecard-head" style="background:'+zEigen.kleur+';color:'+zEigen.ink+';">'
+        + '<span class="dot" style="background:'+zEigen.ink+';opacity:.85;"></span><h3>'+zEigen.naam+' — Groep '+mine.groupNumber+'</h3></div>'
+        + '<div class="zonecard-body"><p class="kenmerken">Groepsleden: '+teammates.map(escapeHtml).join(", ")+'</p>'
+        + '<label for="groupAnswerTa" style="font-size:12.5px;color:var(--text-muted);">Welke klimaateigenschappen zijn volgens jullie relevant voor het ontwerp in deze zone?</label>'
+        + '<textarea class="groupanswer" id="groupAnswerTa">'+escapeHtml(eigenGroep?eigenGroep.antwoord:"")+'</textarea>'
+        + '<button class="btn" id="saveAnswerBtn" style="margin-top:10px;">Opslaan</button>'
+        + '<div class="status" id="saveStatus"></div></div></div>';
+      document.getElementById("saveAnswerBtn").addEventListener("click", function(){
+        var btn = document.getElementById("saveAnswerBtn");
+        btn.disabled = true; btn.textContent = "Bezig...";
+        apiSubmit({
+          action:"updateGroupAnswer", slug: ownSlug, zoneKey: mine.zoneKey,
+          groupNumber: mine.groupNumber, antwoord: document.getElementById("groupAnswerTa").value
+        }).then(function(res){
+          btn.disabled = false; btn.textContent = "Opslaan";
+          var st = document.getElementById("saveStatus");
+          st.textContent = (res && res.ok) ? "Opgeslagen." : "Opslaan mislukt, probeer opnieuw.";
+          st.className = "status show " + ((res && res.ok) ? "ok" : "warn");
+          if (res && res.ok) pollOnce();
+        });
+      });
+      return;
+    }
+
+    // ---- FASE 1: bespreking afgerond ----
+    if (f === 1){
+      mapHint.textContent = "";
+      sidePanel.innerHTML = '<div class="waitcard">De bespreking is afgerond.<br>Wacht op de volgende stap van de docent.</div>';
+      return;
+    }
+
+    // ---- FASE 2: klimaateigenschappen tonen ----
+    if (f === 2){
+      mapHint.textContent = "tik op een zone voor de klimaateigenschappen";
+      var zk = justClickedZone || (mine && Number(mine.zoneKey)) || (tappedPoint && tappedPoint.zoneKey);
+      if (!zk){ sidePanel.innerHTML = '<div class="placeholder">Tik op een klimaatzone.</div>'; return; }
+      var z2 = ZONES[String(zk)];
+      sidePanel.innerHTML = '<div class="zonecard"><div class="zonecard-head" style="background:'+z2.kleur+';color:'+z2.ink+';">'
+        + '<span class="dot" style="background:'+z2.ink+';opacity:.85;"></span><h3>'+z2.naam+'</h3></div>'
+        + '<div class="zonecard-body"><p class="kenmerken"><b>Macroklimaat:</b> '+z2.macroklimaat+'</p>'
+        + '<p class="kenmerken">'+z2.kenmerken+'</p>'
+        + '<ul class="decisions">'+z2.decisions.map(function(d){return '<li><span class="k">'+d[0]+'</span><span class="v">'+d[1]+'</span></li>';}).join("")+'</ul>'
+        + '</div></div>';
+      return;
+    }
+
+    // ---- FASE 3: plaatsen van unit ----
+    if (f === 3){
+      if (!mine){ sidePanel.innerHTML = '<div class="placeholder">Je bent niet geregistreerd. Neem contact op met de docent.</div>'; return; }
+      mapHint.textContent = "tik om je unit te plaatsen";
+      var z3 = ZONES[mine.zoneKey];
+      var loc = pendingPlacement || (mine.lat!=null ? {lat:mine.lat, lon:mine.lon} : null);
+      var locLabel = loc ? locationLabel(loc.lat, loc.lon) : null;
+      sidePanel.innerHTML = '<div class="zonecard"><div class="zonecard-head" style="background:'+z3.kleur+';color:'+z3.ink+';">'
+        + '<span class="dot" style="background:'+z3.ink+';opacity:.85;"></span><h3>'+z3.naam+'</h3></div>'
+        + '<div class="zonecard-body">'
+        + (locLabel ? '<div class="loc">'+locLabel+'</div>' : '<p class="kenmerken">Tik op de kaart om de locatie van je unit te kiezen.</p>')
+        + '<ul class="decisions">'+z3.decisions.map(function(d){return '<li><span class="k">'+d[0]+'</span><span class="v">'+d[1]+'</span></li>';}).join("")+'</ul>'
+        + '<button class="btn" id="confirmPlaceBtn" style="margin-top:10px;" '+(loc?'':'disabled')+'>'+(mine.lat!=null?'Werk locatie bij':'Bevestig locatie')+'</button>'
+        + '<div class="status" id="placeStatus"></div></div></div>';
+      if (loc){
+        document.getElementById("confirmPlaceBtn").addEventListener("click", function(){
+          var btn = document.getElementById("confirmPlaceBtn");
+          btn.disabled = true; btn.textContent = "Bezig...";
+          apiSubmit({
+            action:"placeUnit", slug: ownSlug,
+            lat: Math.round(loc.lat*100)/100, lon: Math.round(loc.lon*100)/100,
+            locatie: locationLabel(loc.lat, loc.lon)
+          }).then(function(res){
+            var st = document.getElementById("placeStatus");
+            st.textContent = (res && res.ok) ? "Locatie bevestigd." : "Opslaan mislukt, probeer opnieuw.";
+            st.className = "status show " + ((res && res.ok) ? "ok" : "warn");
+            btn.disabled = false; btn.textContent = "Werk locatie bij";
+            if (res && res.ok){ pendingPlacement = null; pollOnce(); }
+          });
+        });
+      }
+      return;
+    }
+
+    // ---- FASE 4: locatie vastgelegd ----
+    if (f === 4){
+      mapHint.textContent = "";
+      if (!mine || mine.lat==null){ sidePanel.innerHTML = '<div class="placeholder">Er is geen locatie geregistreerd.</div>'; return; }
+      var z4 = ZONES[mine.zoneKey];
+      sidePanel.innerHTML = '<div class="zonecard"><div class="zonecard-head" style="background:'+z4.kleur+';color:'+z4.ink+';">'
+        + '<span class="dot" style="background:'+z4.ink+';opacity:.85;"></span><h3>'+z4.naam+'</h3></div>'
+        + '<div class="zonecard-body"><div class="loc">'+locationLabel(mine.lat, mine.lon)+'</div>'
+        + '<p class="kenmerken">Je locatie is vastgelegd door de docent en kan niet meer gewijzigd worden. Op de kaart zie je alle locaties van de klas; jouw unit is wit gemarkeerd.</p></div></div>';
+      return;
+    }
+  }
+
   onStateChange(function(){
-    checkExistingSubmission();
-    updateLockUI();
-    if (document.getElementById("view-docent").classList.contains("active")){
-      renderRooster(); renderTeacherMap();
+    renderSidePanel();
+    renderStudentMap();
+    if (document.getElementById("view-docent").classList.contains("active") && state.isDocent){
+      renderDocentView();
     }
   });
 
-  plaatsBtn.addEventListener("click", function(){
-    if (!canSubmit()) return;
-    var naam = naamInput.value.trim();
-    plaatsBtn.disabled = true;
-    plaatsBtn.textContent = "Bezig...";
-    var slug = slugify(naam);
-    var z = ZONES[String(pending.zoneKey)];
-    var payload = {
-      action:"submit", slug:slug, name:naam,
-      lat: Math.round(pending.lat*100)/100,
-      lon: Math.round(pending.lon*100)/100,
-      zoneKey: String(pending.zoneKey), zoneLabel: z.naam,
-      location: locationLabel(pending.lat, pending.lon)
-    };
-    apiSubmit(payload).then(function(res){
-      if (res && res.ok){
-        try{ localStorage.setItem("klimaatkaart_naam", naam); }catch(e){}
-        hasExistingSubmission = true;
-        showStatus("Je woning staat op de kaart, in de "+z.naam.toLowerCase()+" klimaatzone.", "ok");
-        pollOnce();
-      } else if (res && res.error==="locked") {
-        showStatus("De bevraging is intussen vergrendeld door de docent.", "warn");
-      } else if (res && res.error==="not_configured") {
-        showStatus("Deze pagina is nog niet gekoppeld aan een gegevensbron. Vraag de docent dit in te stellen.", "warn");
-      } else {
-        showStatus("Er ging iets mis bij het bewaren. Probeer opnieuw.", "warn");
-      }
-      updateLockUI();
-    }).catch(function(){
-      showStatus("Kon niet verbinden. Controleer je internetverbinding en probeer opnieuw.", "warn");
-      updateLockUI();
-    });
-  });
-
-  renderZonePanel();
+  buildLegend(document.getElementById("legend"));
+  buildLegend(document.getElementById("legendT"));
   renderStudentMap();
 
-  /* ===================== "Klasoverzicht" ===================== */
-  var mapWrapT = document.getElementById("mapwrapT");
+  /* ===================== DOCENTWEERGAVE ===================== */
+  var docentGate = document.getElementById("docentGate");
+  var docentContent = document.getElementById("docentContent");
+  var docentCodeInput = document.getElementById("docentCodeInput");
+  var docentLoginBtn = document.getElementById("docentLoginBtn");
+  var docentLoginStatus = document.getElementById("docentLoginStatus");
   var mapCanvasT = document.getElementById("mapCanvasT");
-  var rooster = document.getElementById("rooster");
-  var statCount = document.getElementById("statCount");
-  var statZones = document.getElementById("statZones");
-  var exportBtn = document.getElementById("exportBtn");
+  var mapWrapT = document.getElementById("mapwrapT");
   var teacherView = makeMapView();
+  var phaseButtonsEl = document.getElementById("phaseButtons");
+  var zoneSummaryEl = document.getElementById("zoneSummary");
+  var groupAnswersEl = document.getElementById("groupAnswers");
+  var groupAnswersHeading = document.getElementById("groupAnswersHeading");
 
-  function zoneColorVar(k){
-    return getComputedStyle(document.documentElement).getPropertyValue('--z'+k).trim();
-  }
   function renderTeacherMap(){
     setupCanvas(mapCanvasT);
-    var pins = state.submissions.map(function(s){ return {lat:s.lat, lon:s.lon, color: zoneColorVar(s.zoneKey)}; });
-    drawMap(mapCanvasT, pins, null, null, teacherView);
+    drawMap(mapCanvasT, [], null, null, teacherView);
     positionOverlays(mapWrapT, mapCanvasT);
   }
   attachMapInteractions(mapCanvasT, teacherView, { onChange: renderTeacherMap });
   addZoomButtons(mapWrapT, teacherView, renderTeacherMap);
-  function renderRooster(){
-    var submissions = state.submissions;
-    if (submissions.length===0){
-      rooster.innerHTML = '<div class="rooster-empty">Nog geen inzendingen.</div>';
-    } else {
-      var sorted = submissions.slice().sort(function(a,b){ return (a.name||"").localeCompare(b.name||""); });
-      rooster.innerHTML = sorted.map(function(s){
-        var z = ZONES[s.zoneKey] || {naam:"?", kleur:"#999"};
-        return '<div class="rooster-row">'
-          + '<span class="dot" style="background:'+z.kleur+';"></span>'
-          + '<div><div class="naam">'+escapeHtml(s.name||"?")+'</div><div class="plaats">'+escapeHtml(s.location||"")+'</div></div>'
-          + '<span class="zonelabel" style="color:'+z.kleur+';">'+z.naam+'</span>'
-          + '</div>';
-      }).join("");
-    }
-    statCount.textContent = submissions.length;
-    var uniqueZones = {};
-    submissions.forEach(function(s){ uniqueZones[s.zoneKey]=1; });
-    statZones.textContent = Object.keys(uniqueZones).length;
+
+  var PHASE_LABELS = [
+    "Bespreking afronden",
+    "Klimaateigenschappen en invloed op architectuur tonen",
+    "Plaatsen van unit activeren",
+    "Locatie vastleggen"
+  ];
+  function renderPhaseButtons(){
+    var html = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">Huidige fase: <b>'+fasenaam(state.fase)+'</b></div>';
+    PHASE_LABELS.forEach(function(label, i){
+      var targetFase = i+1;
+      var isCurrent = state.fase === targetFase;
+      var disabled = state.fase >= targetFase;
+      html += '<button data-target="'+targetFase+'" class="'+(isCurrent?'current':'')+'" '+(disabled?'disabled':'')+'>'
+        + (i+1)+'. '+label+(isCurrent?' ✓':'')+'</button>';
+    });
+    phaseButtonsEl.innerHTML = html;
+    phaseButtonsEl.querySelectorAll("button[data-target]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var target = Number(btn.getAttribute("data-target"));
+        btn.disabled = true;
+        apiSubmit({action:"setFase", docent:docentCode, fase:target}).then(function(res){
+          if (res && res.ok) pollOnce(); else renderPhaseButtons();
+        });
+      });
+    });
   }
 
-  exportBtn.addEventListener("click", function(){
-    var rows = [["Naam","Klimaatzone","Locatie","Breedtegraad","Lengtegraad"]];
-    state.submissions.slice().sort(function(a,b){return (a.name||"").localeCompare(b.name||"");}).forEach(function(s){
-      rows.push([s.name||"", (ZONES[s.zoneKey]||{}).naam || s.zoneLabel || "", s.location||"", s.lat, s.lon]);
+  function renderZoneSummary(){
+    var byZone = {};
+    ZONE_ORDER.forEach(function(k){ byZone[k] = {}; });
+    state.studenten.forEach(function(s){
+      if (!byZone[s.zoneKey]) byZone[s.zoneKey] = {};
+      byZone[s.zoneKey][s.groupNumber] = (byZone[s.zoneKey][s.groupNumber]||0) + 1;
     });
-    var csv = "﻿" + rows.map(function(r){
-      return r.map(function(v){
-        v = String(v);
-        if (/[;"\n]/.test(v)) v = '"'+v.replace(/"/g,'""')+'"';
-        return v;
-      }).join(";");
-    }).join("\r\n");
-    var blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = url;
-    a.download = "klimaatkaart-resultaten-"+(new Date().toISOString().slice(0,10))+".csv";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+    var html = "";
+    ZONE_ORDER.forEach(function(k){
+      var groups = byZone[k];
+      var groupList = Object.keys(groups).sort(function(a,b){return a-b;}).map(function(gn){
+        return "Groep "+gn+" ("+groups[gn]+")";
+      }).join(", ") || "—";
+      html += '<div class="row"><span>'+ZONES[k].naam+'</span><span>'+groupList+'</span></div>';
+    });
+    zoneSummaryEl.innerHTML = html;
+  }
+
+  function renderGroupAnswers(){
+    if (state.fase < 1){
+      groupAnswersHeading.style.display = "none";
+      groupAnswersEl.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Groepsantwoorden worden zichtbaar zodra je "Bespreking afronden" activeert.</p>';
+      return;
+    }
+    groupAnswersHeading.style.display = "";
+    if (state.groepen.length === 0){
+      groupAnswersEl.innerHTML = '<p style="font-size:12.5px;color:var(--text-muted);">Nog geen antwoorden ingevuld.</p>';
+      return;
+    }
+    var sorted = state.groepen.slice().sort(function(a,b){
+      if (a.zoneKey !== b.zoneKey) return a.zoneKey - b.zoneKey;
+      return a.groupNumber - b.groupNumber;
+    });
+    groupAnswersEl.innerHTML = sorted.map(function(g){
+      var zn = (ZONES[g.zoneKey]||{}).naam || g.zoneKey;
+      return '<div style="border-bottom:1px solid var(--border);padding:8px 0;font-size:13px;">'
+        + '<b>'+zn+' — Groep '+g.groupNumber+'</b><div style="color:var(--text-muted);margin-top:3px;">'+escapeHtml(g.antwoord||"(leeg)")+'</div></div>';
+    }).join("");
+  }
+
+  function renderDocentView(){
+    renderPhaseButtons();
+    renderZoneSummary();
+    renderGroupAnswers();
+    renderTeacherMap();
+  }
+
+  docentLoginBtn.addEventListener("click", function(){
+    var code = docentCodeInput.value.trim();
+    docentLoginBtn.disabled = true; docentLoginBtn.textContent = "Controleren...";
+    apiGet({ docent: code }).then(function(data){
+      docentLoginBtn.disabled = false; docentLoginBtn.textContent = "Ontgrendelen";
+      if (data.isDocent){
+        docentCode = code;
+        try{ localStorage.setItem("klimaatkaart_docentcode", code); }catch(e){}
+        state.fase = data.fase; state.isDocent = true; state.studenten = data.studenten; state.groepen = data.groepen;
+        docentGate.style.display = "none";
+        docentContent.style.display = "";
+        renderDocentView();
+      } else {
+        docentLoginStatus.textContent = "Onjuiste code.";
+        docentLoginStatus.className = "status show warn";
+      }
+    }).catch(function(){
+      docentLoginBtn.disabled = false; docentLoginBtn.textContent = "Ontgrendelen";
+      docentLoginStatus.textContent = "Kon niet verbinden.";
+      docentLoginStatus.className = "status show warn";
+    });
+  });
+
+  /* ===================== exports (.xlsx via SheetJS) ===================== */
+  function downloadXlsx(filename, rows){
+    var ws = XLSX.utils.aoa_to_sheet(rows);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Blad1");
+    XLSX.writeFile(wb, filename);
+  }
+  document.getElementById("exportGroepenBtn").addEventListener("click", function(){
+    var rows = [["Klimaatzone","Groepnummer","Aantal leden","Antwoord","Laatst bijgewerkt"]];
+    var counts = {};
+    state.studenten.forEach(function(s){
+      var key = s.zoneKey+"|"+s.groupNumber;
+      counts[key] = (counts[key]||0)+1;
+    });
+    state.groepen.slice().sort(function(a,b){
+      if (a.zoneKey !== b.zoneKey) return a.zoneKey - b.zoneKey;
+      return a.groupNumber - b.groupNumber;
+    }).forEach(function(g){
+      var zn = (ZONES[g.zoneKey]||{}).naam || g.zoneKey;
+      rows.push([zn, g.groupNumber, counts[g.zoneKey+"|"+g.groupNumber]||0, g.antwoord||"", g.tijdstip||""]);
+    });
+    downloadXlsx("klimaatkaart-groepsantwoorden-"+(new Date().toISOString().slice(0,10))+".xlsx", rows);
+  });
+  document.getElementById("exportStudentenBtn").addEventListener("click", function(){
+    var rows = [["Naam","Klimaatzone","Groepnummer","Locatie","Breedtegraad","Lengtegraad"]];
+    state.studenten.slice().sort(function(a,b){ return (a.naam||"").localeCompare(b.naam||""); }).forEach(function(s){
+      var zn = (ZONES[s.zoneKey]||{}).naam || s.zoneKey;
+      rows.push([s.naam||"", zn, s.groupNumber, s.locatie||"", s.lat!=null?s.lat:"", s.lon!=null?s.lon:""]);
+    });
+    downloadXlsx("klimaatkaart-studenten-"+(new Date().toISOString().slice(0,10))+".xlsx", rows);
   });
 
   /* ===================== tabs ===================== */
@@ -1045,25 +1315,30 @@
     tabDocent.setAttribute("aria-selected", !isStudent);
     viewStudent.classList.toggle("active", isStudent);
     viewDocent.classList.toggle("active", !isStudent);
-    try{ localStorage.setItem("klimaatkaart_modus", which); }catch(e){}
     if (isStudent) renderStudentMap();
-    else { renderRooster(); renderTeacherMap(); }
+    else if (state.isDocent) renderDocentView();
   }
   tabStudent.addEventListener("click", function(){ activate("student"); });
   tabDocent.addEventListener("click", function(){ activate("docent"); });
 
   window.addEventListener("resize", debounce(function(){
     if (viewStudent.classList.contains("active")) renderStudentMap();
-    if (viewDocent.classList.contains("active")) renderTeacherMap();
+    if (viewDocent.classList.contains("active") && state.isDocent) renderTeacherMap();
   }, 120));
   function debounce(fn, ms){
     var t; return function(){ clearTimeout(t); var args=arguments; t=setTimeout(function(){fn.apply(null,args);}, ms); };
   }
 
-  try{
-    var savedMode = localStorage.getItem("klimaatkaart_modus");
-    if (savedMode==="docent") activate("docent");
-  }catch(e){}
+  if (docentCode){
+    // automatisch opnieuw inloggen als docent als er al een code lokaal bekend is
+    apiGet({ docent: docentCode }).then(function(data){
+      if (data.isDocent){
+        state.fase = data.fase; state.isDocent = true; state.studenten = data.studenten; state.groepen = data.groepen;
+        docentGate.style.display = "none";
+        docentContent.style.display = "";
+      }
+    });
+  }
 
   if (!apiConfigured) showApiError(true);
   startPolling();
