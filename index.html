@@ -1024,10 +1024,14 @@
               try{ localStorage.setItem("klimaatkaart_naam", naam); }catch(e){}
               pollOnce();
             } else {
-              document.getElementById("joinStatus").textContent = "Er ging iets mis. Probeer opnieuw.";
+              document.getElementById("joinStatus").textContent = "Opslaan mislukt: " + ((res && res.error) || "onbekende fout") + ". Probeer opnieuw.";
               document.getElementById("joinStatus").className = "status show warn";
               confirmBtn.disabled = false; confirmBtn.textContent = "Bevestig";
             }
+          }).catch(function(){
+            document.getElementById("joinStatus").textContent = "Kon niet verbinden met de server. Controleer je internetverbinding en probeer opnieuw.";
+            document.getElementById("joinStatus").className = "status show warn";
+            confirmBtn.disabled = false; confirmBtn.textContent = "Bevestig";
           });
         });
         return;
@@ -1056,6 +1060,11 @@
           st.textContent = (res && res.ok) ? "Opgeslagen." : "Opslaan mislukt, probeer opnieuw.";
           st.className = "status show " + ((res && res.ok) ? "ok" : "warn");
           if (res && res.ok) pollOnce();
+        }).catch(function(){
+          btn.disabled = false; btn.textContent = "Opslaan";
+          var st = document.getElementById("saveStatus");
+          st.textContent = "Kon niet verbinden met de server. Probeer opnieuw.";
+          st.className = "status show warn";
         });
       });
       return;
@@ -1111,6 +1120,11 @@
             st.className = "status show " + ((res && res.ok) ? "ok" : "warn");
             btn.disabled = false; btn.textContent = "Werk locatie bij";
             if (res && res.ok){ pendingPlacement = null; pollOnce(); }
+          }).catch(function(){
+            var st = document.getElementById("placeStatus");
+            st.textContent = "Kon niet verbinden met de server. Probeer opnieuw.";
+            st.className = "status show warn";
+            btn.disabled = false; btn.textContent = "Werk locatie bij";
           });
         });
       }
@@ -1130,8 +1144,16 @@
     }
   }
 
+  var lastRenderedFase = null;
   onStateChange(function(){
-    renderSidePanel();
+    var faseChanged = state.fase !== lastRenderedFase;
+    lastRenderedFase = state.fase;
+    var typing = sidePanel.contains(document.activeElement) &&
+      (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA");
+    // Herteken het zijpaneel niet terwijl de student middenin het typen zit
+    // (bv. groepsnummer/naam invullen, of het groepsantwoord aan het schrijven is) —
+    // enkel wanneer de fase zelf effectief wijzigde forceren we toch een hertekening.
+    if (!typing || faseChanged) renderSidePanel();
     renderStudentMap();
     if (document.getElementById("view-docent").classList.contains("active") && state.isDocent){
       renderDocentView();
@@ -1185,7 +1207,11 @@
         var target = Number(btn.getAttribute("data-target"));
         btn.disabled = true;
         apiSubmit({action:"setFase", docent:docentCode, fase:target}).then(function(res){
-          if (res && res.ok) pollOnce(); else renderPhaseButtons();
+          if (res && res.ok) pollOnce();
+          else { renderPhaseButtons(); alert("Fase wijzigen mislukt: " + ((res && res.error) || "onbekende fout")); }
+        }).catch(function(){
+          renderPhaseButtons();
+          alert("Kon niet verbinden met de server. Probeer opnieuw.");
         });
       });
     });
