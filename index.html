@@ -181,7 +181,7 @@
   .btn.secondary{background:transparent;border-color:var(--border);color:var(--text);width:auto;min-height:40px;padding:9px 15px;font-size:13.5px;}
   .btn.secondary:hover{background:var(--surface-2);}
 
-  .status{font-size:13.5px;padding:11px 13px;border-radius:var(--radius-s);margin-top:10px;display:none;}
+  .status{font-size:14.5px;font-weight:600;padding:11px 13px;border-radius:var(--radius-s);margin-top:10px;display:none;}
   .status.show{display:block;}
   .status.ok{background:color-mix(in srgb, var(--ok) 14%, transparent);color:var(--ok);}
   .status.warn{background:color-mix(in srgb, var(--warn) 14%, transparent);color:var(--warn);}
@@ -244,7 +244,11 @@
     font:inherit; font-size:14.5px; cursor:pointer;
   }
   .quizoption:hover{border-color:var(--accent);}
-  .quizoption.selected{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 10%, transparent);}
+  .quizoption.selected{
+    border-color:var(--accent); border-width:2px; background:color-mix(in srgb, var(--accent) 20%, transparent);
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); font-weight:600;
+  }
+  .quizoption.selected .letter{color:var(--accent); background:color-mix(in srgb, var(--accent) 25%, transparent); border-radius:50%;}
   .quizoption.correct{border-color:#2e7d32; background:color-mix(in srgb, #2e7d32 14%, transparent);}
   .quizoption.incorrect{border-color:var(--warn); background:color-mix(in srgb, var(--warn) 12%, transparent);}
   .quizoption:disabled{cursor:default;}
@@ -1057,14 +1061,14 @@
         btn.classList.add("selected");
         state.eigenAntwoorden[idx] = i; // optimistisch, blokkeert de UI niet
         var st = document.getElementById("answerStatus");
-        st.textContent = "Opslaan..."; st.className = "status show";
+        st.textContent = "⏳ Bezig met opslaan..."; st.className = "status show";
         submitting = true; // blokkeert de achtergrondverversing tot het opslaan bevestigd is,
                             // anders kan een net ingevulde keuze terug overschreven worden door verouderde data
         apiSubmit({ action:"answerQuestion", deviceId: deviceId, vraagIndex: idx, optieIndex: i })
           .then(function(res){
             submitting = false;
-            if (res && res.ok){ st.textContent = "Opgeslagen."; st.className = "status show ok"; }
-            else { st.textContent = "Opslaan mislukt: " + ((res&&res.error)||"onbekende fout"); st.className = "status show warn"; }
+            if (res && res.ok){ st.textContent = "✓ Antwoord opgeslagen"; st.className = "status show ok"; }
+            else { st.textContent = "⚠ Opslaan mislukt: " + ((res&&res.error)||"onbekende fout"); st.className = "status show warn"; }
           })
           .catch(function(){ submitting = false; st.textContent = "Kon niet verbinden met de server."; st.className = "status show warn"; });
       });
@@ -1279,7 +1283,22 @@
   buildLegend(document.getElementById("legend"));
   buildLegend(document.getElementById("legendT"));
 
+  var lastKnownAnswerCount = 0;
   onStateChange(function(){
+    // Detecteer een reset: het aantal eigen antwoorden valt terug naar 0 terwijl
+    // er eerder wel al antwoorden waren, en de quiz staat weer op fase 0.
+    // Spring dan terug naar vraag 1 — anders blijft de student op de vraag staan
+    // waar die toevallig was blijven steken.
+    var currentAnswerCount = Object.keys(state.eigenAntwoorden||{}).length;
+    if (state.fase === 0 && currentAnswerCount === 0 && lastKnownAnswerCount > 0){
+      currentQuestionIndex = 0;
+      quizFinishedLocally = false;
+      viewingQuizReview = false;
+      overlopenActief = false;
+      revealedQuestions = {};
+    }
+    lastKnownAnswerCount = currentAnswerCount;
+
     var typingName = document.activeElement && document.activeElement.id === "regNaamInput";
     if (document.getElementById("view-student").classList.contains("active") && !typingName) renderStudentView();
     if (document.getElementById("view-docent").classList.contains("active") && state.isDocent) renderDocentView();
