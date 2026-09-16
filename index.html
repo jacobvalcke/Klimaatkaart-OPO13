@@ -224,6 +224,8 @@
   /* ===== v4 toevoegingen: quiz, resultaten, docentbesturing ===== */
   .quizquestion{max-width:640px; margin:0 auto;}
   .quizquestion h2{font-size:19px; margin:6px 0 18px; line-height:1.35;}
+  .quizimg{width:100%; max-width:480px; border-radius:10px; display:block; margin:4px auto 4px;}
+  .quizimg-caption{font-size:11px; color:var(--text-muted); text-align:center; margin-bottom:16px;}
   .quizzonelabel{
     display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600;
     padding:4px 10px; border-radius:999px; margin-bottom:10px;
@@ -429,112 +431,54 @@
      ===================================================================== */
   var QUESTIONS = [
     // ---- Tropisch ----
-    { zoneKey:"1", vraag:"In een tropisch klimaat is een hoge thermische massa van de gebouwschil over het algemeen minder doorslaggevend dan in een woestijnklimaat. Waarom?",
-      opties:[
-        "Omdat het dag- en nachttemperatuurverschil er kleiner is, waardoor er minder warmte is om 's nachts weer af te geven",
-        "Omdat een hoge thermische massa vooral nuttig is om warmte snel te geleiden, wat in een vochtig klimaat net ongewenst is",
-        "Omdat thermische massa vooral de isolatiewaarde van een gebouw bepaalt, niet het temperen van temperatuurschommelingen",
-        "Omdat de lucht in een tropisch klimaat zelf een lage warmtegeleidingscoëfficiënt heeft, waardoor massa overbodig wordt"
-      ], correct:0,
-      uitleg:"Thermische massa slaat overdag warmte op en geeft die 's nachts geleidelijk weer af. Bij een klein dag/nacht-verschil, zoals in de tropen, is dat voordeel kleiner dan in een klimaat met grote schommelingen." },
-    { zoneKey:"1", vraag:"In een tropisch, vochtig klimaat ligt het dauwpunt gewoonlijk dicht bij de heersende luchttemperatuur. Wat betekent dit voor het risico op condensatie in een gebouw?",
-      opties:[
-        "Het risico is groter, omdat de lucht al bijna verzadigd is en weinig hoeft af te koelen om te condenseren",
-        "Het risico is net kleiner, omdat de luchttemperatuur er nooit onder het dauwpunt zakt",
-        "Het risico hangt in de eerste plaats af van de thermische massa van de wand, niet van de luchtvochtigheid",
-        "Het risico is enkel relevant wanneer de thermische geleidbaarheid van het materiaal hoog is, ongeacht de luchtvochtigheid"
-      ], correct:0,
-      uitleg:"Hoe hoger de luchtvochtigheid, hoe dichter het dauwpunt bij de luchttemperatuur ligt — de lucht is dan al bijna verzadigd en condenseert sneller." },
+    { zoneKey:"1", vraag:"Waarom is de invallende zonnestraling (insolatie) het hoogst nabij de evenaar, zoals in tropische zones?",
+      opties:["Aan de evenaar is er minder ontwikkeling van wolken","De aarde staat er dichter bij de zon","De zon staat er het hele jaar hoger aan de hemel, waardoor hetzelfde licht op een kleiner gebied invalt","Er zijn geen seizoenen"], correct:2,
+      uitleg:"Het gaat om de hoek/hoogte van de zon, niet om de afstand tot de zon." },
+    { zoneKey:"1", vraag:"Tropische klimaten kennen weinig verschil tussen dag- en nachttemperatuur. Daarom kiest men vaker voor lichte materialen dan voor dikke, zware muren. Waarom is een zware muur die warmte opslaat hier minder nuttig?",
+      opties:["Er is 's nachts nauwelijks afkoeling, waardoor een muur die opgeslagen warmte amper kwijt kan — de warmte blijft binnen hangen","Zware muren zijn minder bestand tegen hoge luchtvochtigheid","Aangezien de muur zijn warmte niet kwijt kan, zal die oververhitten, wat ten koste komt van zijn draagsterkte"], correct:0,
+      uitleg:"Het nut van een warmte-opslaande muur zit in het overdag opslaan en 's nachts afgeven van warmte — bij een klein dag/nachtverschil valt dat grotendeels weg." },
 
     // ---- Droog ----
-    { zoneKey:"2", vraag:"In tegenstelling tot een tropisch klimaat is een hoge thermische massa net wél doorslaggevend in een droog (woestijn)klimaat. Waarom?",
-      opties:[
-        "Omdat het grote dag/nacht-temperatuurverschil toelaat om overdag warmte op te slaan en die 's nachts geleidelijk weer af te geven",
-        "Omdat de lage luchtvochtigheid er de thermische geleidbaarheid van de constructie verhoogt, wat massa minder belangrijk maakt",
-        "Omdat een droog klimaat vooral een hoge thermische isolatie vereist, en isolatie gelijk staat aan een hoge massa",
-        "Omdat de hoge temperaturen overdag een lage thermische massa net voordeliger maken, voor een snellere afkoeling 's nachts"
-      ], correct:0,
-      uitleg:"Bij een groot dag/nacht-verschil verzacht een hoge thermische massa het binnenklimaat: warmte wordt overdag opgeslagen en 's nachts vertraagd afgegeven." },
-    { zoneKey:"2", vraag:"Een goede thermische isolatie is volgens de cursus een combinatie van twee eigenschappen. Welke combinatie is correct?",
-      opties:[
-        "Hoge thermische massa + lage thermische geleidbaarheid",
-        "Lage thermische massa + hoge thermische geleidbaarheid",
-        "Hoge thermische massa + hoge thermische geleidbaarheid",
-        "Lage thermische massa + lage thermische geleidbaarheid"
-      ], correct:0,
-      uitleg:"Goede isolatie combineert een hoge thermische massa met een lage thermische geleidbaarheid — samen vertragen ze zowel het opwarmen als het afkoelen van de constructie." },
+    { zoneKey:"2", vraag:"Stelling: \"In een extreem droog klimaat voorzien we best dunne muren, zodat de warmte niet in de muren kruipt en de binnenruimte nog meer opwarmt.\"",
+      opties:["Juist","Fout"], correct:1,
+      uitleg:"Het omgekeerde is waar: net dikke, zware muren met een hoge thermische massa vertragen de warmteoverdracht naar binnen. Dunne muren bieden weinig weerstand, waardoor de hitte net sneller en directer naar binnen dringt." },
+    { zoneKey:"2", vraag:"Wanneer wind tegen een gebergte botst, wordt de lucht gedwongen om te stijgen. Daarbij koelt ze af, en valt er neerslag. Op basis daarvan: welke van deze twee beschrijvingen klopt?",
+      opties:["De kant waar de wind tegenaan botst (de loefzijde) krijgt de meeste neerslag; de kant erachter (de lijzijde) ligt in de regenschaduw en is droger","De kant waar de wind tegenaan botst (de loefzijde) is net de droogste kant; de kant erachter (de lijzijde) krijgt net de meeste neerslag"], correct:0,
+      uitleg:"De loefzijde vangt de meeste neerslag op; de lijzijde ligt in de regenschaduw en is droger." },
 
     // ---- Mediterraan ----
-    { zoneKey:"3", vraag:"Een woning in een mediterraan klimaat kan de dagelijkse zeebries benutten voor natuurlijke koeling. Wat is daarvoor architecturaal nodig, gegeven hoe die zeebries ontstaat?",
-      opties:[
-        "Openingen die dwarsventilatie toelaten in de richting van de zee, aangezien de bries ontstaat doordat het land sneller opwarmt dan de zee",
-        "Openingen die dwarsventilatie toelaten in de richting van het land, aangezien de bries ontstaat doordat de zee sneller opwarmt dan het land",
-        "Een grote, volledig gesloten glaspartij aan de zeezijde, want glas laat de verkoelende werking van de zeebries ook door",
-        "Voldoende thermische massa aan de zeezijde, zodat de zeebries 's nachts geleidelijk terug afgegeven kan worden"
-      ], correct:0,
-      uitleg:"De zeebries ontstaat doordat het land sneller opwarmt dan de zee, waardoor koelere zeelucht wordt aangezogen — openingen in de richting van de zee laten dit benutten voor natuurlijke ventilatie." },
-    { zoneKey:"3", vraag:"Mediterrane zomers zijn droog en heet, de winters milder en natter door de nabijheid van de zee. Welke ontwerpkeuze houdt rekening met BEIDE seizoenen tegelijk?",
-      opties:[
-        "Horizontale zonwering die de laagstaande winterzon binnenlaat maar de hoogstaande zomerzon weert",
-        "Verticale zonwering die 's zomers en 's winters evenveel zoninval tegenhoudt, ongeacht de zonshoogte",
-        "Een dakoversteek die enkel in de winter wordt opengeklapt en 's zomers volledig dichtgeklapt blijft",
-        "Grote glasoppervlakken zonder zonwering, omdat de zee de temperatuur het hele jaar voldoende matigt"
-      ], correct:0,
-      uitleg:"Horizontale zonwering speelt in op het verschil in zonshoogte tussen zomer en winter: ze weert de hoogstaande zomerzon maar laat de laagstaande winterzon net binnen." },
+    { zoneKey:"3", vraag:"Een woning aan de Mediterrane kust kan de dagelijkse zeewind benutten voor natuurlijke koeling. In welke richting moet je daarvoor vooral openingen voorzien?",
+      opties:["In de richting van het land: de warme landlucht trekt namelijk gemakkelijk richting zee","In de richting van de zee: het land warmt overdag sneller op dan de zee, waardoor koelere zeelucht wordt aangezogen","Op het noorden, want een zeewind waait in mediterrane gebieden steeds uit die richting","De richting maakt niet uit, zolang er maar voldoende openingen zijn"], correct:1,
+      uitleg:"De zeewind ontstaat doordat het land sneller opwarmt dan de zee — openingen richting zee vangen die koelere lucht op." },
+    { zoneKey:"3", vraag:"Mediterrane zomers zijn droog en heet, de winters milder en natter. Welke zonwering houdt rekening met BEIDE seizoenen tegelijk?",
+      opties:["Verticale zonwering, die zomer en winter evenveel zoninval blokkeert","Geen zonwering, want grote ramen zijn altijd voordelig","Horizontale zonwering (bijvoorbeeld een uitkraging) die enkel 's winters open staat en 's zomers dicht","Horizontale zonwering (bijvoorbeeld een uitkraging): die laat de laagstaande winterzon binnen, maar weert de hoogstaande zomerzon"], correct:3,
+      uitleg:"De zonshoogte verschilt sterk tussen zomer en winter; een horizontaal element speelt daar precies op in." },
 
     // ---- Gematigd ----
-    { zoneKey:"4", vraag:"Een gebouw wordt ontworpen in het centrum van een stad met een gematigd klimaat, waar het hitte-eilandeffect speelt. Wat impliceert dat voor het ontwerp?",
-      opties:[
-        "Het stadscentrum is gemiddeld enkele graden warmer door warmteopslag in donkere, verharde oppervlakken, wat extra aandacht voor zomercomfort vraagt",
-        "Het stadscentrum is net kouder dan de rand van de stad, doordat de vele gebouwen elkaar onderling beschaduwen",
-        "Het hitte-eilandeffect speelt enkel 's winters een rol, dus is het vooral relevant voor de verwarmingsstrategie",
-        "De luchtvochtigheid ligt er net hoger dan op het platteland, dus is vochtwering de belangrijkste zorg"
-      ], correct:0,
-      uitleg:"Donkere, verharde oppervlakken houden warmte vast, waardoor stadscentra gemiddeld enkele graden warmer zijn — dat vraagt om extra aandacht voor oververhitting in de zomer." },
-    { zoneKey:"4", vraag:"In een gematigd zeeklimaat kan condensatie ontstaan in een wand wanneer warme, vochtige binnenlucht in contact komt met een kouder buitenoppervlak. Welk begrip uit de cursus beschrijft precies de temperatuur waarop dit gebeurt?",
-      opties:[
-        "Het dauwpunt",
-        "De thermische massa",
-        "De thermische geleidbaarheid",
-        "De thermische isolatie"
-      ], correct:0,
-      uitleg:"Het dauwpunt is de temperatuur waarbij lucht verzadigd raakt met waterdamp; zodra de temperatuur daaronder zakt, ontstaat condensatie. Thermische massa, geleidbaarheid en isolatie zijn verwante maar andere begrippen uit dezelfde cursus." },
+    { zoneKey:"4", vraag:"Een gebouw staat in het centrum van een stad met een gematigd klimaat. Stadscentra zijn gemiddeld enkele graden warmer dan hun groene omgeving. Wat verklaart dit \"hitte-eilandeffect\"?",
+      opties:["Donkere, verharde oppervlakken (asfalt, daken) nemen overdag veel warmte op en geven die 's nachts weer af","Het effect ontstaat enkel 's winters, door verwarmingsinstallaties","Het effect wordt vooral veroorzaakt door uitlaatgassen van het verkeer, niet door de bebouwing zelf"], correct:0,
+      uitleg:"Donkere, verharde materialen slaan warmte op en stralen die 's nachts weer uit." },
+    { zoneKey:"4", vraag:"België heeft een gematigd zeeklimaat. Wat is daarvan het gevolg voor de neerslag, in vergelijking met een gebied ver landinwaarts op dezelfde breedtegraad?",
+      opties:["De neerslag concentreert zich vooral in de zomer, met een droge winter","De neerslag concentreert zich vooral in de winter, met een droge zomer","De neerslag is verspreid over het hele jaar, zonder uitgesproken droog seizoen"], correct:2,
+      uitleg:"De zee zorgt voor een gelijkmatiger, natter klimaat het hele jaar door." },
 
     // ---- Continentaal ----
-    { zoneKey:"5", vraag:"In een continentaal klimaat met een groot verschil tussen zomer en winter kiest men vaak voor een compacte bouwvorm met een lage verhouding schiloppervlak/volume. Welk principe verklaart dit het best?",
-      opties:[
-        "Een kleiner schiloppervlak per volume-eenheid beperkt het warmteverlies (en de warmte-instroom in de zomer) via de gebouwschil",
-        "Een compacte vorm verhoogt vooral de thermische massa van het gebouw, ongeacht het schiloppervlak",
-        "Een compacte vorm zorgt in de eerste plaats voor betere dwarsventilatie doorheen het gebouw",
-        "Het schiloppervlak/volume-principe is enkel relevant voor de fundering, niet voor de gevels of het dak"
-      ], correct:0,
-      uitleg:"Hoe kleiner het schiloppervlak per volume-eenheid, hoe minder oppervlak er is waarlangs warmte verloren (of gewonnen) kan worden." },
-    { zoneKey:"5", vraag:"In berggebieden kunnen microklimaten sterk verschillen tussen twee locaties op amper enkele honderden meters van elkaar (tot 5-10°C). Wat is hiervan de belangrijkste ontwerpimplicatie?",
-      opties:[
-        "De exacte ligging en hellingzijde van de bouwplaats moet mee de klimaatstrategie bepalen — een algemene 'continentale' aanpak volstaat niet altijd",
-        "Microklimaat kan genegeerd worden zodra de macroklimaatzone van de regio gekend is",
-        "Dergelijke verschillen komen enkel voor op hoogtes boven de boomgrens, niet bij gewone bouwpercelen",
-        "Het temperatuurverschil tussen twee nabije locaties in de bergen is nooit groter dan tussen twee steden in eenzelfde klimaatzone"
-      ], correct:0,
-      uitleg:"Microklimaatverschillen door hoogte, hellingzijde en beschutting kunnen lokaal groter zijn dan het macroklimaat doet vermoeden — de concrete site bepaalt mee de juiste strategie." },
+    { zoneKey:"5", vraag:"Welke vorm is energetisch het meest interessant in een continentaal klimaat, met grote verschillen tussen warme zomers en koude winters?",
+      opties:["Een compacte vorm — dat is een vorm met een zo klein mogelijke buitenoppervlakte in verhouding tot haar volume","Een vorm met een groot buitenoppervlak — dat laat immers meer geveloppervlak toe voor ramen"], correct:0,
+      uitleg:"Hoe kleiner de oppervlakte/volume-verhouding, hoe minder oppervlak er is waarlangs warmte weg- of binnenlekt. De extra ramen leveren wel zonnewinst op, maar dat weegt niet op tegen het bijkomende warmteverlies van een groter geveloppervlak." },
+    { zoneKey:"1", vraag:"Waarom hebben joglo-daken van traditionele gebouwen in Indonesië deze specifieke vorm?",
+      afbeelding:"https://upload.wikimedia.org/wikipedia/commons/7/76/Joglo_Kudus.jpg",
+      afbeeldingCaption:"Joglo-dak, Kudus (Midden-Java) — foto: WikiKaleidoskop, CC BY-SA 4.0, via Wikimedia Commons",
+      opties:["Dit heeft te maken met wind en regen","Dit heeft te maken met zon en wind","Dit heeft te maken met zon en regen"], correct:2,
+      uitleg:"Het traditionele Javaanse joglo-dak heeft een steil, piramidevormig bovendeel (brunjung) voor snelle afwatering van de moessonregens, en daaronder een flauwer hellend, breed uitkragend deel (penanggap) dat schaduw geeft tegen de felle zon en tegelijk regenwater van de gevel weg houdt." },
 
     // ---- Polair ----
-    { zoneKey:"6", vraag:"Ondanks de lage insolatie in een polair klimaat kan passieve zonnewinst nog een rol spelen. Wat is de belangrijkste architecturale beperking, gegeven de zeer lage zonnestand?",
-      opties:[
-        "Grote glasoppervlakken verliezen 's winters meer warmte via geleiding dan ze aan zonnewinst opleveren, dus openingen moeten klein en goed geïsoleerd blijven",
-        "Grote glasoppervlakken zijn net voordelig, omdat glas bij een lage zonnestand beter isoleert dan bij een hoge",
-        "De lage zonnestand maakt zonnewinst volledig onmogelijk, dus de grootte van openingen speelt geen rol meer",
-        "Enkel de oriëntatie van de openingen is relevant; de grootte van het glasoppervlak maakt in een polair klimaat geen verschil"
-      ], correct:0,
-      uitleg:"Bij een lage zonnestand leveren grote ramen weinig zonnewinst op, terwijl ze wel veel warmte via geleiding verliezen — vandaar de voorkeur voor kleine, sterk geïsoleerde openingen." },
-    { zoneKey:"6", vraag:"Gebouwen op permafrost worden vaak op een verhoogde fundering geplaatst, los van de grond. Welk mechanisme verklaart waarom een fundering die rechtstreeks op de grond rust hier problematisch is?",
-      opties:[
-        "Warmteverlies van het gebouw naar de bodem kan de permafrost doen ontdooien, waardoor de fundering instabiel wordt",
-        "Een fundering op de grond isoleert net te goed, waardoor warmte in het gebouw blijft hangen en het oververhit",
-        "Permafrost zorgt net voor een stabielere fundering dan gewone grond, maar enkel als die verhoogd geplaatst wordt",
-        "Een verhoogde fundering is vooral nodig om de thermische massa van de bodem beter te benutten"
-      ], correct:0,
-      uitleg:"Warmte die van het gebouw naar de bodem lekt, kan de permafrost doen ontdooien; een verhoogde, losstaande fundering voorkomt dat warmteverlies naar de grond." }
+    { zoneKey:"6", vraag:"Welke invloed hebben grote raamopeningen in een poolklimaat, waar de zon het hele jaar laag staat?",
+      opties:["Ze zijn er vooral esthetisch interessant, zonder noemenswaardige invloed op het comfort binnen","Ze zorgen er vooral voor extra daglicht tijdens de korte winterdagen, ongeacht het warmteverlies dat ze veroorzaken","Ze laten 's winters meer warmte naar buiten ontsnappen dan ze aan zonlicht binnenlaten, omdat de zon te laag en te zwak staat om dat te compenseren"], correct:2,
+      uitleg:"Bij een lage zonnestand leveren grote ramen weinig zonnewinst op, terwijl er wel voortdurend warmte langs verloren gaat." },
+    { zoneKey:"6", vraag:"Gebouwen op permafrost (permanent bevroren grond) worden vaak op een verhoogde fundering gezet, los van de grond. Waarom is een fundering die rechtstreeks op de grond rust hier riskant?",
+      opties:["Een fundering op de grond zou het gebouw te veel doen afkoelen","De ruimte onder het gebouw is stilstaande lucht, en die dient als extra warmte-isolatie","Warmte die van het gebouw naar de bodem lekt, kan de permafrost doen ontdooien, waardoor de fundering instabiel wordt"], correct:2,
+      uitleg:"Voortdurend warmteverlies naar de bodem kan de permafrost lokaal doen ontdooien." }
   ];
 
 
@@ -1021,6 +965,8 @@
     var html = '<div class="quizquestion">'
       + '<span class="quizzonelabel" style="background:'+zone.kleur+';color:'+zone.ink+';">'+zone.naam+'</span>'
       + '<h2>'+escapeHtml(q.vraag)+'</h2>'
+      + (q.afbeelding ? ('<img class="quizimg" src="'+q.afbeelding+'" alt="'+escapeHtml(zone.naam)+'">'
+          + (q.afbeeldingCaption ? '<div class="quizimg-caption">'+escapeHtml(q.afbeeldingCaption)+'</div>' : '')) : '')
       + '<div class="quizoptions">';
     q.opties.forEach(function(opt, i){
       var cls = "quizoption";
@@ -1229,7 +1175,7 @@
     quizQuestionEl.innerHTML = '<div class="quizquestion">'
       + '<h2>Welkom</h2>'
       + '<p style="color:var(--text-muted);font-size:13.5px;margin-bottom:14px;">Vul je naam in — dit is uitsluitend voor aanwezigheidsregistratie. Je antwoorden op de quiz blijven volledig anoniem en worden nergens aan je naam gekoppeld.</p>'
-      + '<div class="field"><label for="regNaamInput">Jouw naam</label><input type="text" id="regNaamInput" maxlength="60" autocomplete="off"></div>'
+      + '<div class="field"><label for="regNaamInput">Voor- en familienaam</label><input type="text" id="regNaamInput" maxlength="60" autocomplete="off" placeholder="bv. Jan Peeters"></div>'
       + '<button class="btn" id="regConfirmBtn" style="margin-top:12px;" disabled>Bevestig</button>'
       + '<div class="status" id="regStatus"></div>'
       + '</div>';
@@ -1368,6 +1314,8 @@
     var totalVotes = Object.keys(counts).reduce(function(s,k){return s+counts[k];},0);
     html = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:6px;">Vraag '+(idx+1)+' van '+total+' — <span style="color:var(--text);">'+zone.naam+'</span> — '+totalVotes+' antwoorden binnen</div>'
       + '<div style="font-size:15px;font-weight:600;margin-bottom:10px;">'+escapeHtml(q.vraag)+'</div>'
+      + (q.afbeelding ? ('<img class="quizimg" style="max-width:260px;" src="'+q.afbeelding+'" alt="'+escapeHtml(zone.naam)+'">'
+          + (q.afbeeldingCaption ? '<div class="quizimg-caption">'+escapeHtml(q.afbeeldingCaption)+'</div>' : '')) : '')
       + '<div class="quizresults">';
     q.opties.forEach(function(opt, i){
       var c = counts[i] || 0;
