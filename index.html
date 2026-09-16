@@ -430,50 +430,110 @@
   var QUESTIONS = [
     // ---- Tropisch ----
     { zoneKey:"1", vraag:"In een tropisch klimaat is een hoge thermische massa van de gebouwschil over het algemeen minder doorslaggevend dan in een woestijnklimaat. Waarom?",
-      opties:["Omdat het dag- en nachttemperatuurverschil er kleiner is, waardoor er minder warmte is om 's nachts weer af te geven","Omdat er in tropische gebieden geen directe zon is","Omdat beton er niet beschikbaar is als bouwmateriaal","Omdat luchtvochtigheid geen invloed heeft op thermische massa"], correct:0,
+      opties:[
+        "Omdat het dag- en nachttemperatuurverschil er kleiner is, waardoor er minder warmte is om 's nachts weer af te geven",
+        "Omdat een hoge thermische massa vooral nuttig is om warmte snel te geleiden, wat in een vochtig klimaat net ongewenst is",
+        "Omdat thermische massa vooral de isolatiewaarde van een gebouw bepaalt, niet het temperen van temperatuurschommelingen",
+        "Omdat de lucht in een tropisch klimaat zelf een lage warmtegeleidingscoëfficiënt heeft, waardoor massa overbodig wordt"
+      ], correct:0,
       uitleg:"Thermische massa slaat overdag warmte op en geeft die 's nachts geleidelijk weer af. Bij een klein dag/nacht-verschil, zoals in de tropen, is dat voordeel kleiner dan in een klimaat met grote schommelingen." },
     { zoneKey:"1", vraag:"In een tropisch, vochtig klimaat ligt het dauwpunt gewoonlijk dicht bij de heersende luchttemperatuur. Wat betekent dit voor het risico op condensatie in een gebouw?",
-      opties:["Het risico is groter, omdat de lucht al bijna verzadigd is en weinig hoeft af te koelen om te condenseren","Het risico is net kleiner, omdat het er nooit koud wordt","Condensatie hangt enkel af van het materiaal, niet van luchtvochtigheid","Er is geen verband tussen dauwpunt en condensatie"], correct:0,
+      opties:[
+        "Het risico is groter, omdat de lucht al bijna verzadigd is en weinig hoeft af te koelen om te condenseren",
+        "Het risico is net kleiner, omdat de luchttemperatuur er nooit onder het dauwpunt zakt",
+        "Het risico hangt in de eerste plaats af van de thermische massa van de wand, niet van de luchtvochtigheid",
+        "Het risico is enkel relevant wanneer de thermische geleidbaarheid van het materiaal hoog is, ongeacht de luchtvochtigheid"
+      ], correct:0,
       uitleg:"Hoe hoger de luchtvochtigheid, hoe dichter het dauwpunt bij de luchttemperatuur ligt — de lucht is dan al bijna verzadigd en condenseert sneller." },
 
     // ---- Droog ----
     { zoneKey:"2", vraag:"In tegenstelling tot een tropisch klimaat is een hoge thermische massa net wél doorslaggevend in een droog (woestijn)klimaat. Waarom?",
-      opties:["Omdat het grote dag/nacht-temperatuurverschil toelaat om overdag warmte op te slaan en die 's nachts geleidelijk weer af te geven","Omdat er in woestijnen enkel beton beschikbaar is als bouwmateriaal","Omdat thermische massa enkel nuttig is bij hoge luchtvochtigheid","Omdat er geen zon is in droge klimaten"], correct:0,
+      opties:[
+        "Omdat het grote dag/nacht-temperatuurverschil toelaat om overdag warmte op te slaan en die 's nachts geleidelijk weer af te geven",
+        "Omdat de lage luchtvochtigheid er de thermische geleidbaarheid van de constructie verhoogt, wat massa minder belangrijk maakt",
+        "Omdat een droog klimaat vooral een hoge thermische isolatie vereist, en isolatie gelijk staat aan een hoge massa",
+        "Omdat de hoge temperaturen overdag een lage thermische massa net voordeliger maken, voor een snellere afkoeling 's nachts"
+      ], correct:0,
       uitleg:"Bij een groot dag/nacht-verschil verzacht een hoge thermische massa het binnenklimaat: warmte wordt overdag opgeslagen en 's nachts vertraagd afgegeven." },
-    { zoneKey:"2", vraag:"Een goede thermische isolatie is volgens de cursus een combinatie van twee eigenschappen. Welke, en waarom is die combinatie net relevant bij grote temperatuurschommelingen zoals in een droog klimaat?",
-      opties:["Hoge thermische massa + lage thermische geleidbaarheid: dat vertraagt zowel het opwarmen overdag als het afkoelen 's nachts","Lage thermische massa + hoge thermische geleidbaarheid: dat versnelt de temperatuurwisseling binnen","Enkel een hoge thermische geleidbaarheid volstaat","Isolatie staat volledig los van thermische massa of geleidbaarheid"], correct:0,
-      uitleg:"Goede isolatie combineert een hoge thermische massa met een lage thermische geleidbaarheid, wat het gebouw traag laat op- en afkoelen." },
+    { zoneKey:"2", vraag:"Een goede thermische isolatie is volgens de cursus een combinatie van twee eigenschappen. Welke combinatie is correct?",
+      opties:[
+        "Hoge thermische massa + lage thermische geleidbaarheid",
+        "Lage thermische massa + hoge thermische geleidbaarheid",
+        "Hoge thermische massa + hoge thermische geleidbaarheid",
+        "Lage thermische massa + lage thermische geleidbaarheid"
+      ], correct:0,
+      uitleg:"Goede isolatie combineert een hoge thermische massa met een lage thermische geleidbaarheid — samen vertragen ze zowel het opwarmen als het afkoelen van de constructie." },
 
     // ---- Mediterraan ----
     { zoneKey:"3", vraag:"Een woning in een mediterraan klimaat kan de dagelijkse zeebries benutten voor natuurlijke koeling. Wat is daarvoor architecturaal nodig, gegeven hoe die zeebries ontstaat?",
-      opties:["Openingen die dwarsventilatie toelaten in de richting van de zee, aangezien de bries ontstaat doordat het land sneller opwarmt dan de zee","Een volledig gesloten gevel aan de kant van de zee, want zeewind bevat te veel vocht","Zeebries is te zwak om ooit voor ventilatie te zorgen","Enkel mechanische ventilatie kan hierop inspelen"], correct:0,
-      uitleg:"De zeebries ontstaat doordat het land sneller opwarmt dan de zee, waardoor koelere zeelucht wordt aangezogen — openingen in die richting laten dit benutten voor natuurlijke ventilatie." },
+      opties:[
+        "Openingen die dwarsventilatie toelaten in de richting van de zee, aangezien de bries ontstaat doordat het land sneller opwarmt dan de zee",
+        "Openingen die dwarsventilatie toelaten in de richting van het land, aangezien de bries ontstaat doordat de zee sneller opwarmt dan het land",
+        "Een grote, volledig gesloten glaspartij aan de zeezijde, want glas laat de verkoelende werking van de zeebries ook door",
+        "Voldoende thermische massa aan de zeezijde, zodat de zeebries 's nachts geleidelijk terug afgegeven kan worden"
+      ], correct:0,
+      uitleg:"De zeebries ontstaat doordat het land sneller opwarmt dan de zee, waardoor koelere zeelucht wordt aangezogen — openingen in de richting van de zee laten dit benutten voor natuurlijke ventilatie." },
     { zoneKey:"3", vraag:"Mediterrane zomers zijn droog en heet, de winters milder en natter door de nabijheid van de zee. Welke ontwerpkeuze houdt rekening met BEIDE seizoenen tegelijk?",
-      opties:["Horizontale zonwering die de laagstaande winterzon binnenlaat maar de hoogstaande zomerzon weert","Een dak zonder enige overstek, voor maximale lichtinval het hele jaar","Volledig gesloten gevels, want de zee zorgt sowieso voor voldoende koeling","Enkel isolatie is nodig, zonwering is overbodig"], correct:0,
+      opties:[
+        "Horizontale zonwering die de laagstaande winterzon binnenlaat maar de hoogstaande zomerzon weert",
+        "Verticale zonwering die 's zomers en 's winters evenveel zoninval tegenhoudt, ongeacht de zonshoogte",
+        "Een dakoversteek die enkel in de winter wordt opengeklapt en 's zomers volledig dichtgeklapt blijft",
+        "Grote glasoppervlakken zonder zonwering, omdat de zee de temperatuur het hele jaar voldoende matigt"
+      ], correct:0,
       uitleg:"Horizontale zonwering speelt in op het verschil in zonshoogte tussen zomer en winter: ze weert de hoogstaande zomerzon maar laat de laagstaande winterzon net binnen." },
 
     // ---- Gematigd ----
     { zoneKey:"4", vraag:"Een gebouw wordt ontworpen in het centrum van een stad met een gematigd klimaat, waar het hitte-eilandeffect speelt. Wat impliceert dat voor het ontwerp?",
-      opties:["Het stadscentrum is gemiddeld enkele graden warmer door warmteopslag in donkere, verharde oppervlakken, wat extra aandacht voor zomercomfort vraagt","Het stadscentrum is net kouder dan de rand door de vele gebouwen die schaduw geven","Het hitte-eilandeffect speelt enkel 's winters","Luchtvochtigheid is in de stad net hoger dan op het platteland, dus vochtwering is de hoofdzorg"], correct:0,
+      opties:[
+        "Het stadscentrum is gemiddeld enkele graden warmer door warmteopslag in donkere, verharde oppervlakken, wat extra aandacht voor zomercomfort vraagt",
+        "Het stadscentrum is net kouder dan de rand van de stad, doordat de vele gebouwen elkaar onderling beschaduwen",
+        "Het hitte-eilandeffect speelt enkel 's winters een rol, dus is het vooral relevant voor de verwarmingsstrategie",
+        "De luchtvochtigheid ligt er net hoger dan op het platteland, dus is vochtwering de belangrijkste zorg"
+      ], correct:0,
       uitleg:"Donkere, verharde oppervlakken houden warmte vast, waardoor stadscentra gemiddeld enkele graden warmer zijn — dat vraagt om extra aandacht voor oververhitting in de zomer." },
-    { zoneKey:"4", vraag:"In een gematigd zeeklimaat kan condensatie ontstaan in een wand wanneer warme, vochtige binnenlucht in contact komt met een kouder buitenoppervlak. Welk begrip beschrijft precies het punt waarop dit gebeurt?",
-      opties:["Het dauwpunt: de temperatuur waarbij de lucht met waterdamp verzadigd raakt","De thermische massa van de wand","De warmtegeleidingscoëfficiënt van het materiaal alleen","De insolatie van de gevel"], correct:0,
-      uitleg:"Het dauwpunt is de temperatuur waarbij lucht verzadigd raakt met waterdamp; zodra de temperatuur daaronder zakt, ontstaat condensatie." },
+    { zoneKey:"4", vraag:"In een gematigd zeeklimaat kan condensatie ontstaan in een wand wanneer warme, vochtige binnenlucht in contact komt met een kouder buitenoppervlak. Welk begrip uit de cursus beschrijft precies de temperatuur waarop dit gebeurt?",
+      opties:[
+        "Het dauwpunt",
+        "De thermische massa",
+        "De thermische geleidbaarheid",
+        "De thermische isolatie"
+      ], correct:0,
+      uitleg:"Het dauwpunt is de temperatuur waarbij lucht verzadigd raakt met waterdamp; zodra de temperatuur daaronder zakt, ontstaat condensatie. Thermische massa, geleidbaarheid en isolatie zijn verwante maar andere begrippen uit dezelfde cursus." },
 
     // ---- Continentaal ----
     { zoneKey:"5", vraag:"In een continentaal klimaat met een groot verschil tussen zomer en winter kiest men vaak voor een compacte bouwvorm met een lage verhouding schiloppervlak/volume. Welk principe verklaart dit het best?",
-      opties:["Een kleiner schiloppervlak per volume-eenheid beperkt het warmteverlies (en de warmte-instroom in de zomer) via de gebouwschil","Een compacte vorm zorgt vooral voor meer natuurlijke ventilatie","Een compacte vorm heeft geen invloed op warmteverlies, enkel op esthetiek","Compacte vormen zijn enkel relevant in tropische klimaten"], correct:0,
+      opties:[
+        "Een kleiner schiloppervlak per volume-eenheid beperkt het warmteverlies (en de warmte-instroom in de zomer) via de gebouwschil",
+        "Een compacte vorm verhoogt vooral de thermische massa van het gebouw, ongeacht het schiloppervlak",
+        "Een compacte vorm zorgt in de eerste plaats voor betere dwarsventilatie doorheen het gebouw",
+        "Het schiloppervlak/volume-principe is enkel relevant voor de fundering, niet voor de gevels of het dak"
+      ], correct:0,
       uitleg:"Hoe kleiner het schiloppervlak per volume-eenheid, hoe minder oppervlak er is waarlangs warmte verloren (of gewonnen) kan worden." },
     { zoneKey:"5", vraag:"In berggebieden kunnen microklimaten sterk verschillen tussen twee locaties op amper enkele honderden meters van elkaar (tot 5-10°C). Wat is hiervan de belangrijkste ontwerpimplicatie?",
-      opties:["De exacte ligging en hellingzijde van de bouwplaats moet mee de klimaatstrategie bepalen — een algemene 'continentale' aanpak volstaat niet altijd","Microklimaat is verwaarloosbaar zodra je het macroklimaat van de regio kent","Enkel de temperatuur varieert met hoogte, nooit de neerslag","Elke locatie in een continentaal klimaat vraagt exact dezelfde ontwerpaanpak"], correct:0,
+      opties:[
+        "De exacte ligging en hellingzijde van de bouwplaats moet mee de klimaatstrategie bepalen — een algemene 'continentale' aanpak volstaat niet altijd",
+        "Microklimaat kan genegeerd worden zodra de macroklimaatzone van de regio gekend is",
+        "Dergelijke verschillen komen enkel voor op hoogtes boven de boomgrens, niet bij gewone bouwpercelen",
+        "Het temperatuurverschil tussen twee nabije locaties in de bergen is nooit groter dan tussen twee steden in eenzelfde klimaatzone"
+      ], correct:0,
       uitleg:"Microklimaatverschillen door hoogte, hellingzijde en beschutting kunnen lokaal groter zijn dan het macroklimaat doet vermoeden — de concrete site bepaalt mee de juiste strategie." },
 
     // ---- Polair ----
     { zoneKey:"6", vraag:"Ondanks de lage insolatie in een polair klimaat kan passieve zonnewinst nog een rol spelen. Wat is de belangrijkste architecturale beperking, gegeven de zeer lage zonnestand?",
-      opties:["Grote glasoppervlakken verliezen 's winters meer warmte via geleiding dan ze aan zonnewinst opleveren, dus openingen moeten klein en goed geïsoleerd blijven","Glas isoleert perfect, dus grotere ramen zijn altijd voordelig in poolklimaten","Zonnewinst is volledig onmogelijk in poolklimaten, dus ramen zijn overbodig","De lage zonnestand heeft geen invloed op de grootte van openingen"], correct:0,
+      opties:[
+        "Grote glasoppervlakken verliezen 's winters meer warmte via geleiding dan ze aan zonnewinst opleveren, dus openingen moeten klein en goed geïsoleerd blijven",
+        "Grote glasoppervlakken zijn net voordelig, omdat glas bij een lage zonnestand beter isoleert dan bij een hoge",
+        "De lage zonnestand maakt zonnewinst volledig onmogelijk, dus de grootte van openingen speelt geen rol meer",
+        "Enkel de oriëntatie van de openingen is relevant; de grootte van het glasoppervlak maakt in een polair klimaat geen verschil"
+      ], correct:0,
       uitleg:"Bij een lage zonnestand leveren grote ramen weinig zonnewinst op, terwijl ze wel veel warmte via geleiding verliezen — vandaar de voorkeur voor kleine, sterk geïsoleerde openingen." },
     { zoneKey:"6", vraag:"Gebouwen op permafrost worden vaak op een verhoogde fundering geplaatst, los van de grond. Welk mechanisme verklaart waarom een fundering die rechtstreeks op de grond rust hier problematisch is?",
-      opties:["Warmteverlies van het gebouw naar de bodem kan de permafrost doen ontdooien, waardoor de fundering instabiel wordt","Een fundering op de grond isoleert net te goed, waardoor het gebouw oververhit","Permafrost heeft geen enkele invloed op funderingen","Een verhoogde fundering is enkel esthetisch, niet functioneel"], correct:0,
+      opties:[
+        "Warmteverlies van het gebouw naar de bodem kan de permafrost doen ontdooien, waardoor de fundering instabiel wordt",
+        "Een fundering op de grond isoleert net te goed, waardoor warmte in het gebouw blijft hangen en het oververhit",
+        "Permafrost zorgt net voor een stabielere fundering dan gewone grond, maar enkel als die verhoogd geplaatst wordt",
+        "Een verhoogde fundering is vooral nodig om de thermische massa van de bodem beter te benutten"
+      ], correct:0,
       uitleg:"Warmte die van het gebouw naar de bodem lekt, kan de permafrost doen ontdooien; een verhoogde, losstaande fundering voorkomt dat warmteverlies naar de grond." }
   ];
 
