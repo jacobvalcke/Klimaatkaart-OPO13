@@ -306,6 +306,7 @@
       </div>
       <div class="side">
         <div class="panel" id="sidePanel" style="padding:18px;"></div>
+        <button class="btn secondary" id="viewQuizReviewBtn" type="button" style="width:100%;margin-top:10px;">Bekijk je quizvragen opnieuw</button>
       </div>
     </div>
   </div>
@@ -956,16 +957,47 @@
 
   var currentQuestionIndex = 0;
   var quizFinishedLocally = false;
-  var myAnswersSynced = false; // wordt true zodra we eigenAntwoorden minstens 1x van de server kregen
+  var viewingQuizReview = false; // laat toe om de vragen nog te bekijken nadat de plaatsingsfase al gestart is
 
   function renderQuiz(){
     var total = QUESTIONS.length;
 
-    // Fase 1+: de docent heeft de vragenreeks afgesloten — geen bewerking meer mogelijk.
+    // Fase 1+: de docent heeft de vragenreeks afgesloten — geen bewerking meer mogelijk,
+    // maar wel nog vrij doorbladerbaar, ook nadat de plaatsingsfase al gestart is.
     if (state.fase >= 1){
-      var answeredCount = Object.keys(state.eigenAntwoorden||{}).length;
-      quizProgress.innerHTML = "Quiz afgesloten";
-      quizQuestionEl.innerHTML = '<div class="quizwaiting">De vragenreeks is afgesloten ('+answeredCount+'/'+total+' vragen beantwoord).<br>Wacht op de docent om verder te gaan naar het plaatsen van je unit.</div>';
+      var idx = currentQuestionIndex;
+      var q = QUESTIONS[idx];
+      var zone = ZONES[q.zoneKey];
+      var myAnswer = state.eigenAntwoorden[idx];
+      myAnswer = (myAnswer===undefined) ? null : myAnswer;
+      quizProgress.innerHTML = "Vraag " + (idx+1) + " van " + total + " — afgesloten, enkel ter inzage";
+
+      var html = '<div class="quizquestion">'
+        + '<span class="quizzonelabel" style="background:'+zone.kleur+';color:'+zone.ink+';">'+zone.naam+'</span>'
+        + '<h2>'+escapeHtml(q.vraag)+'</h2>'
+        + (q.afbeelding ? ('<img class="quizimg" src="'+q.afbeelding+'" alt="'+escapeHtml(zone.naam)+'">'
+            + (q.afbeeldingCaption ? '<div class="quizimg-caption">'+escapeHtml(q.afbeeldingCaption)+'</div>' : '')) : '')
+        + '<div class="quizoptions">';
+      q.opties.forEach(function(opt, i){
+        var cls = "quizoption" + (i===myAnswer ? " selected" : "");
+        html += '<button class="'+cls+'" disabled><span class="letter">'+LETTERS[i]+'</span><span>'+escapeHtml(opt)+'</span></button>';
+      });
+      html += '</div>'
+        + (myAnswer===null ? '<p style="font-size:12.5px;color:var(--text-muted);margin-top:10px;">Je hebt deze vraag niet beantwoord.</p>' : '')
+        + '<div style="display:flex; justify-content:space-between; gap:10px; margin-top:18px;">'
+        + '<button class="btn secondary" id="prevQBtn" '+(idx===0?'disabled':'')+'>← Vorige vraag</button>'
+        + '<button class="btn secondary" id="nextQBtn" '+(idx>=total-1?'disabled':'')+'>Volgende vraag →</button>'
+        + '</div>'
+        + (state.fase >= 2 ? '<button class="btn" id="backToPlacementBtn" style="margin-top:12px;width:100%;">← Terug naar plaatsing</button>' : '')
+        + '</div>';
+      quizQuestionEl.innerHTML = html;
+
+      var prevBtn2 = document.getElementById("prevQBtn");
+      if (prevBtn2) prevBtn2.addEventListener("click", function(){ if (idx>0){ currentQuestionIndex--; renderQuiz(); } });
+      var nextBtn2 = document.getElementById("nextQBtn");
+      if (nextBtn2) nextBtn2.addEventListener("click", function(){ if (idx<total-1){ currentQuestionIndex++; renderQuiz(); } });
+      var backBtn = document.getElementById("backToPlacementBtn");
+      if (backBtn) backBtn.addEventListener("click", function(){ viewingQuizReview = false; renderStudentView(); });
       return;
     }
 
@@ -1026,12 +1058,15 @@
         state.eigenAntwoorden[idx] = i; // optimistisch, blokkeert de UI niet
         var st = document.getElementById("answerStatus");
         st.textContent = "Opslaan..."; st.className = "status show";
+        submitting = true; // blokkeert de achtergrondverversing tot het opslaan bevestigd is,
+                            // anders kan een net ingevulde keuze terug overschreven worden door verouderde data
         apiSubmit({ action:"answerQuestion", deviceId: deviceId, vraagIndex: idx, optieIndex: i })
           .then(function(res){
+            submitting = false;
             if (res && res.ok){ st.textContent = "Opgeslagen."; st.className = "status show ok"; }
             else { st.textContent = "Opslaan mislukt: " + ((res&&res.error)||"onbekende fout"); st.className = "status show warn"; }
           })
-          .catch(function(){ st.textContent = "Kon niet verbinden met de server."; st.className = "status show warn"; });
+          .catch(function(){ submitting = false; st.textContent = "Kon niet verbinden met de server."; st.className = "status show warn"; });
       });
     });
     var prevBtn = document.getElementById("prevQBtn");
@@ -1075,7 +1110,7 @@
   function renderStudentMap(){
     setupCanvas(mapCanvas);
     var pins = [];
-    if (state.fase === 3){
+    if (state.fase >= 2){
       state.studenten.forEach(function(s){
         if (s.lat==null || s.lon==null) return;
         pins.push({ lat:s.lat, lon:s.lon, color: s.slug===ownSlug ? "#ffffff" : (zoneColorVar(s.zoneKey)||"#ffffff") });
@@ -1229,8 +1264,7 @@
 
   function renderStudentView(){
     if (!ownName){ renderRegistrationGate(); return; }
-    if (state.fase <= 1){
-      // fase 0 = quiz actief, fase 1 = quiz afgesloten (wacht-scherm, zie renderQuiz)
+    if (state.fase <= 1 || viewingQuizReview){
       quizPanel.style.display = "";
       placementLayout.style.display = "none";
       renderQuiz();
@@ -1314,6 +1348,7 @@
 
   var revealedQuestions = {}; // lokale (niet-gesynchroniseerde) UI-status: welke vragen toont de docent het antwoord van
   var overlopenActief = false;
+  var overlopenIndex = 0;
 
   function totalAnswersFor(vraagIndex){
     var counts = (state.resultaten && state.resultaten[vraagIndex]) || {};
@@ -1340,54 +1375,66 @@
       return;
     }
 
-    // Fase 1+: quiz is afgesloten. Toon knop naar het overloop-scherm, plus de plaatsingsknop.
-    var html = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">Vragenreeks afgesloten. Gegevens liggen vast.</div>'
-      + '<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">'
-      + '<button class="btn secondary" id="toggleOverlopenBtn">'+(overlopenActief?'Verberg overzicht':'Vragen overlopen')+'</button>'
-      + '<button class="btn secondary" id="resetQuizBtn">↺ Vragenlijst herstarten</button>'
+    // Fase 1+: quiz is afgesloten.
+    if (!overlopenActief){
+      docentQuizControl.innerHTML = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">Vragenreeks afgesloten. Gegevens liggen vast.</div>'
+        + '<div style="display:flex; gap:10px; flex-wrap:wrap;">'
+        + '<button class="btn secondary" id="toggleOverlopenBtn">Vragen overlopen</button>'
+        + '<button class="btn secondary" id="resetQuizBtn">↺ Vragenlijst herstarten</button>'
+        + '</div>';
+      bindResetQuizBtn();
+      document.getElementById("toggleOverlopenBtn").addEventListener("click", function(){
+        overlopenActief = true; overlopenIndex = 0; renderDocentQuizControl();
+      });
+      return;
+    }
+
+    // Overloop-scherm: één vraag per keer, in dezelfde stijl als bij de student,
+    // met de resultaten meteen zichtbaar en een aparte knop om het antwoord te tonen.
+    var i = overlopenIndex;
+    var q = QUESTIONS[i];
+    var zone = ZONES[q.zoneKey];
+    var counts = (state.resultaten && state.resultaten[i]) || {};
+    var totalVotes = totalAnswersFor(i);
+    var reveal = !!revealedQuestions[i];
+
+    var html = '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">'
+      + '<span style="font-size:12.5px;color:var(--text-muted);">Vraag '+(i+1)+' van '+total+' — '+totalVotes+' antwoorden</span>'
+      + '<button class="btn secondary" id="closeOverlopenBtn" style="padding:4px 10px;font-size:12.5px;">✕ Sluiten</button>'
+      + '</div>'
+      + '<div class="quizquestion" style="max-width:none;">'
+      + '<span class="quizzonelabel" style="background:'+zone.kleur+';color:'+zone.ink+';">'+zone.naam+'</span>'
+      + '<h2 style="font-size:16px;">'+escapeHtml(q.vraag)+'</h2>'
+      + (q.afbeelding ? ('<img class="quizimg" style="max-width:280px;" src="'+q.afbeelding+'" alt="'+escapeHtml(zone.naam)+'">'
+          + (q.afbeeldingCaption ? '<div class="quizimg-caption">'+escapeHtml(q.afbeeldingCaption)+'</div>' : '')) : '')
+      + '<div class="quizoptions">';
+    q.opties.forEach(function(opt, oi){
+      var c = counts[oi] || 0;
+      var pct = totalVotes ? Math.round((c/totalVotes)*100) : 0;
+      var isCorrect = reveal && oi === q.correct;
+      html += '<div class="quizoption'+(isCorrect?' correct':'')+'" style="position:relative;overflow:hidden;cursor:default;">'
+        + '<div style="position:absolute;inset:0;background:'+OPTION_COLORS[oi%OPTION_COLORS.length]+';opacity:.15;width:'+pct+'%;"></div>'
+        + '<span class="letter" style="position:relative;">'+LETTERS[oi]+'</span>'
+        + '<span style="position:relative;flex:1;">'+escapeHtml(opt)+'</span>'
+        + '<span style="position:relative;font-variant-numeric:tabular-nums;color:var(--text-muted);font-size:12.5px;">'+c+' ('+pct+'%)</span>'
+        + '</div>';
+    });
+    html += '</div>'
+      + '<button class="btn secondary" id="toggleRevealBtn" style="margin-top:14px;">'+(reveal?'Verberg correct antwoord':'Antwoord tonen')+'</button>'
+      + (reveal ? '<div class="quizexplain show">'+escapeHtml(q.uitleg)+'</div>' : '')
+      + '<div style="display:flex; justify-content:space-between; gap:10px; margin-top:18px;">'
+      + '<button class="btn secondary" id="overlopenPrevBtn" '+(i===0?'disabled':'')+'>← Vorige vraag</button>'
+      + '<button class="btn secondary" id="overlopenNextBtn" '+(i>=total-1?'disabled':'')+'>Volgende vraag →</button>'
+      + '</div>'
       + '</div>';
-    if (overlopenActief){
-      html += '<div id="overlopenLijst" style="display:flex; flex-direction:column; gap:16px;">';
-      QUESTIONS.forEach(function(q, i){
-        var counts = (state.resultaten && state.resultaten[i]) || {};
-        var totalVotes = totalAnswersFor(i);
-        var reveal = !!revealedQuestions[i];
-        html += '<div style="border:1px solid var(--border); border-radius:8px; padding:12px 14px;">'
-          + '<div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Vraag '+(i+1)+' — '+ZONES[q.zoneKey].naam+' — '+totalVotes+' antwoorden</div>'
-          + '<div style="font-size:14px;font-weight:600;margin-bottom:8px;">'+escapeHtml(q.vraag)+'</div>'
-          + '<div class="segbar">';
-        q.opties.forEach(function(opt, oi){
-          var c = counts[oi] || 0;
-          var pct = totalVotes ? (c/totalVotes*100) : 0;
-          var isCorrect = reveal && oi === q.correct;
-          html += '<div class="segbar-seg'+(isCorrect?' segbar-correct':'')+'" style="width:'+pct+'%;background:'+OPTION_COLORS[oi%OPTION_COLORS.length]+';" title="'+escapeHtml(LETTERS[oi]+'. '+opt+' — '+c+' ('+Math.round(pct)+'%)')+'"></div>';
-        });
-        html += '</div><div class="segbar-legend">';
-        q.opties.forEach(function(opt, oi){
-          var c = counts[oi] || 0;
-          var isCorrect = reveal && oi === q.correct;
-          html += '<span class="segbar-legenditem'+(isCorrect?' correct':'')+'"><span class="dot" style="background:'+OPTION_COLORS[oi%OPTION_COLORS.length]+';"></span>'+LETTERS[oi]+'. '+escapeHtml(opt.length>40?opt.slice(0,40)+"…":opt)+' ('+c+')</span>';
-        });
-        html += '</div>'
-          + '<button class="btn secondary" data-qi="'+i+'" style="margin-top:8px;">'+(reveal?'Verberg antwoord':'Antwoord tonen')+'</button>'
-          + (reveal ? '<div class="quizexplain show" style="margin-top:8px;">'+escapeHtml(q.uitleg)+'</div>' : '')
-          + '</div>';
-      });
-      html += '</div>';
-    }
     docentQuizControl.innerHTML = html;
-    bindResetQuizBtn();
-    var toggleBtn = document.getElementById("toggleOverlopenBtn");
-    if (toggleBtn) toggleBtn.addEventListener("click", function(){ overlopenActief = !overlopenActief; renderDocentQuizControl(); });
-    if (overlopenActief){
-      document.querySelectorAll("#overlopenLijst button[data-qi]").forEach(function(btn){
-        btn.addEventListener("click", function(){
-          var qi = Number(btn.getAttribute("data-qi"));
-          revealedQuestions[qi] = !revealedQuestions[qi];
-          renderDocentQuizControl();
-        });
-      });
-    }
+
+    document.getElementById("closeOverlopenBtn").addEventListener("click", function(){ overlopenActief = false; renderDocentQuizControl(); });
+    document.getElementById("toggleRevealBtn").addEventListener("click", function(){ revealedQuestions[i] = !reveal; renderDocentQuizControl(); });
+    var pBtn = document.getElementById("overlopenPrevBtn");
+    if (pBtn) pBtn.addEventListener("click", function(){ if (i>0){ overlopenIndex--; renderDocentQuizControl(); } });
+    var nBtn = document.getElementById("overlopenNextBtn");
+    if (nBtn) nBtn.addEventListener("click", function(){ if (i<total-1){ overlopenIndex++; renderDocentQuizControl(); } });
   }
 
   var FASE_KNOPPEN = [
@@ -1506,6 +1553,12 @@
       }
     });
   }
+
+  document.getElementById("viewQuizReviewBtn").addEventListener("click", function(){
+    viewingQuizReview = true;
+    currentQuestionIndex = 0;
+    renderStudentView();
+  });
 
   var resetIdentityLink = document.getElementById("resetIdentityLink");
   if (ownName){ resetIdentityLink.style.display = ""; }
