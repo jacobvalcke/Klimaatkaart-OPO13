@@ -265,7 +265,7 @@
     <div class="brand">
       <span class="eyebrow">OPO13 — Inleiding in de Bouwtechnieken</span>
       <h1>Klimaatkaart</h1>
-      <p id="topSubtitle">Beantwoord samen de vragen op het bord. Nadien plaats je individueel je eigen unit op de kaart.</p>
+      <p id="topSubtitle"></p>
     </div>
     <div class="modeswitch" role="tablist" aria-label="Weergave">
       <button id="tab-student" class="active" role="tab" aria-selected="true">Studenten</button>
@@ -429,8 +429,8 @@
   var QUESTIONS = [
     // ---- Tropisch ----
     { zoneKey:"1", vraag:"Waarom is de insolatie (invallend zonlicht per oppervlakte) het hoogst nabij de evenaar, zoals in tropische zones?",
-      opties:["Omdat de zon er het hele jaar hoog aan de hemel staat, waardoor het licht op een kleiner gebied invalt","Omdat er minder wolken zijn boven de evenaar","Omdat de aarde er dichter bij de zon staat","Omdat er geen seizoenen zijn"], correct:0,
-      uitleg:"Door het verschil in hoogte van de zon valt het zonlicht rond de polen op een groter gebied dan rond de evenaar, waardoor de insolatie er hoger is." },
+      opties:["Omdat de zon er hoger aan de hemel staat (een steilere invalshoek), waardoor het licht op een kleiner gebied invalt","Omdat er minder wolken zijn boven de evenaar","Omdat de aarde er dichter bij de zon staat","Omdat er geen seizoenen zijn"], correct:0,
+      uitleg:"Het gaat om de hoogte/invalshoek van de zon, niet om de afstand tot de zon: door het verschil in hoogte van de zon valt het zonlicht rond de polen op een groter gebied dan rond de evenaar, waardoor de insolatie er hoger is." },
     { zoneKey:"1", vraag:"Tropische streken liggen vaak onder uitgestrekte bossen. Wat is daarvan het macroklimaat-effect?",
       opties:["Hogere temperatuur en lagere luchtvochtigheid","Lagere temperatuur en hogere luchtvochtigheid","Geen effect op temperatuur of vocht","Enkel effect op de wind"], correct:1,
       uitleg:"Bij uitgestrekte bossen is de temperatuur lager en de luchtvochtigheid hoger." },
@@ -957,15 +957,16 @@
     }).catch(function(){ /* fout al zichtbaar via apiError-balk */ });
   }
   var pollTimer = null;
+  var submitting = false;
   function startPolling(){
     if (pollTimer) return;
     pollOnce();
     pollTimer = setInterval(function(){
-      if (document.visibilityState === "visible") pollOnce();
+      if (document.visibilityState === "visible" && !submitting) pollOnce();
     }, POLL_MS);
   }
   document.addEventListener("visibilitychange", function(){
-    if (document.visibilityState === "visible") pollOnce();
+    if (document.visibilityState === "visible" && !submitting) pollOnce();
   });
 
   /* ===================== QUIZ (studenten) ===================== */
@@ -1026,10 +1027,30 @@
           var i = Number(btn.getAttribute("data-i"));
           quizQuestionEl.querySelectorAll(".quizoption").forEach(function(b){ b.disabled = true; });
           btn.classList.add("selected");
-          apiSubmit({ action:"answerQuestion", deviceId: deviceId, vraagIndex: idx, optieIndex: i }).then(function(res){
-            if (res && res.ok){ state.eigenAntwoord = i; pollOnce(); }
-            else { renderQuiz(); }
-          }).catch(function(){ renderQuiz(); });
+          state.eigenAntwoord = i; // optimistisch: meteen tonen, voor de bevestiging van de server terug is
+          submitting = true;
+          apiSubmit({ action:"answerQuestion", deviceId: deviceId, vraagIndex: idx, optieIndex: i })
+            .then(function(res){
+              submitting = false;
+              if (res && res.ok){ pollOnce(); }
+              else {
+                state.eigenAntwoord = null;
+                renderQuiz();
+                var warn = document.createElement("p");
+                warn.style.cssText = "margin-top:10px;font-size:13px;color:var(--warn);";
+                warn.textContent = "Opslaan mislukt: " + ((res && res.error) || "onbekende fout") + ". Probeer opnieuw.";
+                quizQuestionEl.querySelector(".quizquestion").appendChild(warn);
+              }
+            })
+            .catch(function(){
+              submitting = false;
+              state.eigenAntwoord = null;
+              renderQuiz();
+              var warn = document.createElement("p");
+              warn.style.cssText = "margin-top:10px;font-size:13px;color:var(--warn);";
+              warn.textContent = "Kon niet verbinden met de server. Probeer opnieuw.";
+              quizQuestionEl.querySelector(".quizquestion").appendChild(warn);
+            });
         });
       });
     }
