@@ -346,7 +346,7 @@
      oude scriptgedrag gebruiken.
      ===================================================================== */
   var API_URL = "https://script.google.com/macros/s/AKfycbwzZJDGXjfFPtqIuzTlGYeuAcCyUVTy4S3yGhlEAD_KLahADz6kpAfBX7VcmpQWvZ2Bcg/exec";
-  var POLL_MS = 4000;
+  var POLL_MS = 5000;
 
   /* =====================================================================
      ZONES: macro/meso/microklimaat-duiding per zone. De zone-indeling zelf
@@ -422,95 +422,61 @@
   var ZONE_ORDER = ["1","2","3","4","5","6"];
 
   /* =====================================================================
-     QUIZVRAGEN — 24 vragen (4 per zone), telkens herleidbaar tot letterlijke
-     tekst uit Les 2 (Concept), over macro-, meso- en microklimaat. correct =
-     index (0-based) van het juiste antwoord in opties[].
+     QUIZVRAGEN — 12 vragen (2 per zone), telkens herleidbaar tot letterlijke
+     tekst uit Les 2 (Concept: macro/meso/microklimaat) en Les 6 (Comfort:
+     thermische massa, thermische isolatie, dauwpunt), toegepast op een
+     ontwerpvraag. correct = index (0-based) van het juiste antwoord.
      ===================================================================== */
   var QUESTIONS = [
     // ---- Tropisch ----
-    { zoneKey:"1", vraag:"Waarom is de insolatie (invallend zonlicht per oppervlakte) het hoogst nabij de evenaar, zoals in tropische zones?",
-      opties:["Omdat de zon er hoger aan de hemel staat (een steilere invalshoek), waardoor het licht op een kleiner gebied invalt","Omdat er minder wolken zijn boven de evenaar","Omdat de aarde er dichter bij de zon staat","Omdat er geen seizoenen zijn"], correct:0,
-      uitleg:"Het gaat om de hoogte/invalshoek van de zon, niet om de afstand tot de zon: door het verschil in hoogte van de zon valt het zonlicht rond de polen op een groter gebied dan rond de evenaar, waardoor de insolatie er hoger is." },
-    { zoneKey:"1", vraag:"Tropische streken liggen vaak onder uitgestrekte bossen. Wat is daarvan het macroklimaat-effect?",
-      opties:["Hogere temperatuur en lagere luchtvochtigheid","Lagere temperatuur en hogere luchtvochtigheid","Geen effect op temperatuur of vocht","Enkel effect op de wind"], correct:1,
-      uitleg:"Bij uitgestrekte bossen is de temperatuur lager en de luchtvochtigheid hoger." },
-    { zoneKey:"1", vraag:"Wat gebeurt er met het lokale klimaat wanneer een tropisch bos wordt gekapt?",
-      opties:["Een stabielere temperatuur","Meer neerslag dan voordien","Grotere temperatuurschommelingen en lagere luchtvochtigheid, tot mogelijk verwoestijning","Geen enkele merkbare verandering"], correct:2,
-      uitleg:"Zonder bos krijgen wind, regen en zon vrij spel: grotere temperatuurvariaties, lagere luchtvochtigheid, en in het ergste geval verwoestijning." },
-    { zoneKey:"1", vraag:"Warmteverschillen tussen evenaar en polen veroorzaken drukverschillen. Wat is daarvan het gevolg, volgens de cursus?",
-      opties:["Volledige windstilte","Wind, via de algemene circulatie, die warmte herverdeelt over de aarde","Enkel effect op zeestromen, niet op wind","Geen effect op het klimaat"], correct:1,
-      uitleg:"Drukverschillen gaan gepaard met wind; de algemene circulatie en zeestromen herverdelen samen de warmte over het aardoppervlak." },
+    { zoneKey:"1", vraag:"In een tropisch klimaat is een hoge thermische massa van de gebouwschil over het algemeen minder doorslaggevend dan in een woestijnklimaat. Waarom?",
+      opties:["Omdat het dag- en nachttemperatuurverschil er kleiner is, waardoor er minder warmte is om 's nachts weer af te geven","Omdat er in tropische gebieden geen directe zon is","Omdat beton er niet beschikbaar is als bouwmateriaal","Omdat luchtvochtigheid geen invloed heeft op thermische massa"], correct:0,
+      uitleg:"Thermische massa slaat overdag warmte op en geeft die 's nachts geleidelijk weer af. Bij een klein dag/nacht-verschil, zoals in de tropen, is dat voordeel kleiner dan in een klimaat met grote schommelingen." },
+    { zoneKey:"1", vraag:"In een tropisch, vochtig klimaat ligt het dauwpunt gewoonlijk dicht bij de heersende luchttemperatuur. Wat betekent dit voor het risico op condensatie in een gebouw?",
+      opties:["Het risico is groter, omdat de lucht al bijna verzadigd is en weinig hoeft af te koelen om te condenseren","Het risico is net kleiner, omdat het er nooit koud wordt","Condensatie hangt enkel af van het materiaal, niet van luchtvochtigheid","Er is geen verband tussen dauwpunt en condensatie"], correct:0,
+      uitleg:"Hoe hoger de luchtvochtigheid, hoe dichter het dauwpunt bij de luchttemperatuur ligt — de lucht is dan al bijna verzadigd en condenseert sneller." },
 
     // ---- Droog ----
-    { zoneKey:"2", vraag:"Droge zones liggen vaak ver landinwaarts. Wat is daarvan het effect op de luchttemperatuur?",
-      opties:["De temperatuur varieert sterker dan boven zee, met grote dag/nacht-verschillen","De temperatuur blijft even stabiel als boven zee","Er is geen verband met de afstand tot zee","De temperatuur wordt net gelijkmatiger"], correct:0,
-      uitleg:"Land warmt sneller op én koelt sneller af dan water, dus de luchttemperatuur varieert sterker boven land dan boven zee." },
-    { zoneKey:"2", vraag:"Een gebergte kan een gebied droger maken. Hoe komt dat, volgens het mesoklimaat-principe van loef- en lijzijde?",
-      opties:["Beide zijden van een gebergte krijgen altijd evenveel neerslag","De lijzijde (afgekeerd van de wind) ligt in de regenschaduw en is veel droger dan de loefzijde","De loefzijde is altijd de droogste kant","Gebergtes hebben geen invloed op neerslag"], correct:1,
-      uitleg:"Eén kant van het gebergte vangt de meeste neerslag op (loefzijde), terwijl de andere kant in de regenschaduw ligt en droger is (lijzijde)." },
-    { zoneKey:"2", vraag:"Welk microklimaat-effect kan bijdragen tot het ontstaan of uitbreiden van een droge, woestijnachtige zone?",
-      opties:["Meer bebossing in de omgeving","Meer oppervlaktewater vlakbij","Het verdwijnen van begroeiing, waardoor wind, regen en zon vrij spel krijgen","Een dichter bladerdak"], correct:2,
-      uitleg:"Zonder begroeiing krijgen wind, regen en zon vrij spel, wat het gebied verder kan doen uitdrogen." },
-    { zoneKey:"2", vraag:"Welke geografische factoren bepalen, volgens de cursus, mee het macroklimaat van een gebied?",
-      opties:["Land-zee-ijsverdeling, reliëf en hoogte boven zeeniveau","Enkel de temperatuur van de oceaan","Enkel de afstand tot de evenaar","Enkel de aanwezigheid van steden"], correct:0,
-      uitleg:"Geografische factoren zijn de land-zee-ijs-verdeling, het reliëf van het aardoppervlak, en de hoogte boven zeeniveau." },
+    { zoneKey:"2", vraag:"In tegenstelling tot een tropisch klimaat is een hoge thermische massa net wél doorslaggevend in een droog (woestijn)klimaat. Waarom?",
+      opties:["Omdat het grote dag/nacht-temperatuurverschil toelaat om overdag warmte op te slaan en die 's nachts geleidelijk weer af te geven","Omdat er in woestijnen enkel beton beschikbaar is als bouwmateriaal","Omdat thermische massa enkel nuttig is bij hoge luchtvochtigheid","Omdat er geen zon is in droge klimaten"], correct:0,
+      uitleg:"Bij een groot dag/nacht-verschil verzacht een hoge thermische massa het binnenklimaat: warmte wordt overdag opgeslagen en 's nachts vertraagd afgegeven." },
+    { zoneKey:"2", vraag:"Een goede thermische isolatie is volgens de cursus een combinatie van twee eigenschappen. Welke, en waarom is die combinatie net relevant bij grote temperatuurschommelingen zoals in een droog klimaat?",
+      opties:["Hoge thermische massa + lage thermische geleidbaarheid: dat vertraagt zowel het opwarmen overdag als het afkoelen 's nachts","Lage thermische massa + hoge thermische geleidbaarheid: dat versnelt de temperatuurwisseling binnen","Enkel een hoge thermische geleidbaarheid volstaat","Isolatie staat volledig los van thermische massa of geleidbaarheid"], correct:0,
+      uitleg:"Goede isolatie combineert een hoge thermische massa met een lage thermische geleidbaarheid, wat het gebouw traag laat op- en afkoelen." },
 
     // ---- Mediterraan ----
-    { zoneKey:"3", vraag:"Mediterrane gebieden liggen vaak aan zee. Wat is het mesoklimaat-effect van de nabijheid van de zee op de temperatuur?",
-      opties:["Extremere temperatuurschommelingen","Een matigende invloed op de temperatuur en een hogere luchtvochtigheid","Geen enkele invloed","Enkel invloed op de neerslag, niet op temperatuur"], correct:1,
-      uitleg:"Oppervlaktewater zoals de zee heeft over het algemeen een matigende invloed op de temperatuur, en de luchtvochtigheid is er meestal hoger." },
-    { zoneKey:"3", vraag:"Aan de kust kan op een warme dag een zeewind ('zeebries') ontstaan. Hoe komt dat, volgens de cursus?",
-      opties:["De zee warmt sneller op dan het land","Het land warmt sneller op, de warme lucht stijgt op, en koelere lucht van zee wordt aangezogen","Er is geen verband tussen land en zee bij wind","Zeewind ontstaat enkel 's nachts"], correct:1,
-      uitleg:"Op warme zomerdagen warmt het land op en stijgt de lucht op, waardoor koele lucht van zee wordt aangezogen — de zeewind." },
-    { zoneKey:"3", vraag:"Wat veroorzaakt wind, volgens de cursus?",
-      opties:["Luchtdrukverschillen, die op hun beurt ontstaan door warmteverschillen","Enkel de aanwezigheid van bergen","Enkel zeestromen","Wind heeft geen verband met temperatuur"], correct:0,
-      uitleg:"Warmteverschillen resulteren in luchtdrukverschillen, wat gepaard gaat met wind." },
-    { zoneKey:"3", vraag:"Over welke afstand kan het temperatuursverschil door een zeebries merkbaar zijn, volgens het voorbeeld uit de cursus?",
-      opties:["Nooit dichter dan 50 km van de kust","Soms al over minder dan een kilometer","Enkel over honderden kilometers","Dat verschil is niet meetbaar"], correct:1,
-      uitleg:"De zeewind veroorzaakt een temperatuursverschil van enkele graden over een afstand van soms minder dan een kilometer (voorbeeld San Francisco)." },
+    { zoneKey:"3", vraag:"Een woning in een mediterraan klimaat kan de dagelijkse zeebries benutten voor natuurlijke koeling. Wat is daarvoor architecturaal nodig, gegeven hoe die zeebries ontstaat?",
+      opties:["Openingen die dwarsventilatie toelaten in de richting van de zee, aangezien de bries ontstaat doordat het land sneller opwarmt dan de zee","Een volledig gesloten gevel aan de kant van de zee, want zeewind bevat te veel vocht","Zeebries is te zwak om ooit voor ventilatie te zorgen","Enkel mechanische ventilatie kan hierop inspelen"], correct:0,
+      uitleg:"De zeebries ontstaat doordat het land sneller opwarmt dan de zee, waardoor koelere zeelucht wordt aangezogen — openingen in die richting laten dit benutten voor natuurlijke ventilatie." },
+    { zoneKey:"3", vraag:"Mediterrane zomers zijn droog en heet, de winters milder en natter door de nabijheid van de zee. Welke ontwerpkeuze houdt rekening met BEIDE seizoenen tegelijk?",
+      opties:["Horizontale zonwering die de laagstaande winterzon binnenlaat maar de hoogstaande zomerzon weert","Een dak zonder enige overstek, voor maximale lichtinval het hele jaar","Volledig gesloten gevels, want de zee zorgt sowieso voor voldoende koeling","Enkel isolatie is nodig, zonwering is overbodig"], correct:0,
+      uitleg:"Horizontale zonwering speelt in op het verschil in zonshoogte tussen zomer en winter: ze weert de hoogstaande zomerzon maar laat de laagstaande winterzon net binnen." },
 
     // ---- Gematigd ----
-    { zoneKey:"4", vraag:"Landen zoals België hebben een gematigd zeeklimaat. Welke invloed heeft de nabijheid van zee hierop, volgens de cursus?",
-      opties:["Een matigende invloed op temperatuur en een hogere luchtvochtigheid","Extremere temperaturen","Geen invloed op het klimaat","Enkel invloed op wind, niet op temperatuur"], correct:0,
-      uitleg:"Oppervlaktewater heeft een matigende invloed op de temperatuur en verhoogt de luchtvochtigheid in de omgeving." },
-    { zoneKey:"4", vraag:"Waarom heeft een gematigd zeeklimaat doorgaans mindere temperatuurschommelingen dan een gebied ver landinwaarts?",
-      opties:["Omdat land sneller opwarmt én sneller afkoelt dan water, en de nabijheid van zee dit dempt","Omdat er in gematigde gebieden geen wind is","Omdat de zon er altijd op dezelfde hoogte staat","Omdat er geen seizoenen zijn"], correct:0,
-      uitleg:"Land warmt sneller op en koelt sneller af dan water; de nabijheid van zee dempt daardoor de temperatuurschommelingen." },
-    { zoneKey:"4", vraag:"Wat is het hitte-eilandeffect, zoals beschreven in de cursus?",
-      opties:["Stadscentra zijn gemiddeld enkele graden warmer dan de omliggende gebieden en parken","Steden zijn altijd kouder dan het platteland","Het effect treedt enkel 's winters op","Het heeft geen invloed op de luchtvochtigheid"], correct:0,
-      uitleg:"Donkere oppervlakken absorberen en houden warmte vast, waardoor stadscentra gemiddeld enkele graden warmer zijn dan de omgeving." },
-    { zoneKey:"4", vraag:"Waarom is de luchtvochtigheid in stedelijke gebieden vaak lager dan in de omliggende natuur, volgens de cursus?",
-      opties:["Omdat regenwater niet wordt vastgehouden maar wegloopt via afvoergoten en riolen","Omdat er meer bomen staan in steden","Omdat er minder wind is in de stad","Dat klopt niet, de luchtvochtigheid is net hoger in steden"], correct:0,
-      uitleg:"In de stad wordt regenwater niet vastgehouden maar afgevoerd via goten en riolen, waardoor de luchtvochtigheid er naar verhouding lager is." },
+    { zoneKey:"4", vraag:"Een gebouw wordt ontworpen in het centrum van een stad met een gematigd klimaat, waar het hitte-eilandeffect speelt. Wat impliceert dat voor het ontwerp?",
+      opties:["Het stadscentrum is gemiddeld enkele graden warmer door warmteopslag in donkere, verharde oppervlakken, wat extra aandacht voor zomercomfort vraagt","Het stadscentrum is net kouder dan de rand door de vele gebouwen die schaduw geven","Het hitte-eilandeffect speelt enkel 's winters","Luchtvochtigheid is in de stad net hoger dan op het platteland, dus vochtwering is de hoofdzorg"], correct:0,
+      uitleg:"Donkere, verharde oppervlakken houden warmte vast, waardoor stadscentra gemiddeld enkele graden warmer zijn — dat vraagt om extra aandacht voor oververhitting in de zomer." },
+    { zoneKey:"4", vraag:"In een gematigd zeeklimaat kan condensatie ontstaan in een wand wanneer warme, vochtige binnenlucht in contact komt met een kouder buitenoppervlak. Welk begrip beschrijft precies het punt waarop dit gebeurt?",
+      opties:["Het dauwpunt: de temperatuur waarbij de lucht met waterdamp verzadigd raakt","De thermische massa van de wand","De warmtegeleidingscoëfficiënt van het materiaal alleen","De insolatie van de gevel"], correct:0,
+      uitleg:"Het dauwpunt is de temperatuur waarbij lucht verzadigd raakt met waterdamp; zodra de temperatuur daaronder zakt, ontstaat condensatie." },
 
     // ---- Continentaal ----
-    { zoneKey:"5", vraag:"Gebieden ver landinwaarts (zoals Siberië of het binnenland van Canada) kennen grote verschillen tussen zomer en winter. Waarom, volgens de cursus?",
-      opties:["Omdat deze gebieden dichter bij de zon liggen in de zomer","Omdat land sneller opwarmt én sneller afkoelt dan water, zonder zee die dit dempt","Omdat er meer bergen zijn in deze gebieden","Omdat er geen wind is"], correct:1,
-      uitleg:"Land warmt sneller op en koelt sneller af dan water; ver van een dempende zee is het jaarlijkse temperatuurverschil dus groter." },
-    { zoneKey:"5", vraag:"Wat gebeurt er met temperatuur en neerslag naarmate je hoger op een berg komt, volgens de cursus?",
-      opties:["De temperatuur neemt af, de neerslag neemt toe","De temperatuur neemt toe, de neerslag neemt af","Beide blijven gelijk","De neerslag neemt af, de temperatuur blijft gelijk"], correct:0,
-      uitleg:"De temperatuur neemt af met de hoogte, terwijl de neerslag toeneemt." },
-    { zoneKey:"5", vraag:"Wat zijn föhn en chinook, volgens de cursus?",
-      opties:["Koude oceaanstromingen","Warme valwinden die het klimaat in gebergten kunnen beïnvloeden","Soorten neerslag","Een type wolk"], correct:1,
-      uitleg:"Föhn en chinook zijn warme valwinden die het (micro)klimaat in gebergten kunnen beïnvloeden." },
-    { zoneKey:"5", vraag:"Wat verzorgt, samen met wind, mee de herverdeling van warmte over het aardoppervlak, volgens de cursus?",
-      opties:["Zeestromen","Vulkanen","Enkel het poolijs","Enkel rechtstreekse zonnestraling"], correct:0,
-      uitleg:"De algemene circulatie verzorgt samen met de voornamelijk door wind veroorzaakte zeestromen de herverdeling van warmte over de aarde." },
+    { zoneKey:"5", vraag:"In een continentaal klimaat met een groot verschil tussen zomer en winter kiest men vaak voor een compacte bouwvorm met een lage verhouding schiloppervlak/volume. Welk principe verklaart dit het best?",
+      opties:["Een kleiner schiloppervlak per volume-eenheid beperkt het warmteverlies (en de warmte-instroom in de zomer) via de gebouwschil","Een compacte vorm zorgt vooral voor meer natuurlijke ventilatie","Een compacte vorm heeft geen invloed op warmteverlies, enkel op esthetiek","Compacte vormen zijn enkel relevant in tropische klimaten"], correct:0,
+      uitleg:"Hoe kleiner het schiloppervlak per volume-eenheid, hoe minder oppervlak er is waarlangs warmte verloren (of gewonnen) kan worden." },
+    { zoneKey:"5", vraag:"In berggebieden kunnen microklimaten sterk verschillen tussen twee locaties op amper enkele honderden meters van elkaar (tot 5-10°C). Wat is hiervan de belangrijkste ontwerpimplicatie?",
+      opties:["De exacte ligging en hellingzijde van de bouwplaats moet mee de klimaatstrategie bepalen — een algemene 'continentale' aanpak volstaat niet altijd","Microklimaat is verwaarloosbaar zodra je het macroklimaat van de regio kent","Enkel de temperatuur varieert met hoogte, nooit de neerslag","Elke locatie in een continentaal klimaat vraagt exact dezelfde ontwerpaanpak"], correct:0,
+      uitleg:"Microklimaatverschillen door hoogte, hellingzijde en beschutting kunnen lokaal groter zijn dan het macroklimaat doet vermoeden — de concrete site bepaalt mee de juiste strategie." },
 
     // ---- Polair ----
-    { zoneKey:"6", vraag:"Waarom is de insolatie het laagst nabij de polen?",
-      opties:["Omdat de polen verder van de zon liggen dan de evenaar","Omdat de zon er laag aan de hemel staat, waardoor het licht over een groter gebied verspreid wordt","Omdat er altijd wolken zijn boven de polen","Omdat er geen atmosfeer is bij de polen"], correct:1,
-      uitleg:"Door de lage stand van de zon valt het zonlicht rond de polen op een groter gebied, wat de insolatie er lager maakt." },
-    { zoneKey:"6", vraag:"Welke astronomische factoren bepalen mee het macroklimaat, volgens de cursus?",
-      opties:["Enkel de maanstand","De hoogte van de zon, de duur van de dag, en de afstand van de aarde tot de zon","Enkel de seizoenen","Enkel het aantal uren zonneschijn per dag"], correct:1,
-      uitleg:"De astronomische factoren zijn de hoogte van de zon, de daglengte, en de afstand van de aarde tot de zon." },
-    { zoneKey:"6", vraag:"Wat gebeurt er met de temperatuur naarmate de hoogte toeneemt, zoals op hooggebergte of een ijskap?",
-      opties:["Ze neemt af","Ze neemt toe","Ze blijft gelijk","Dat hangt niet af van de hoogte"], correct:0,
-      uitleg:"De temperatuur neemt af met de hoogte — een principe dat evengoed geldt op poolijskappen als op hooggebergte." },
-    { zoneKey:"6", vraag:"Welke factoren horen bij de geografische factoren die het macroklimaat mee bepalen, volgens de cursus?",
-      opties:["Enkel de luchttemperatuur","Land-zee-ijsverdeling, reliëf, hoogte boven zeeniveau","Enkel windrichting","Enkel de aanwezigheid van steden"], correct:1,
-      uitleg:"Geografische factoren zijn de land-zee-ijs-verdeling, het reliëf van het aardoppervlak, en de hoogte boven zeeniveau." }
+    { zoneKey:"6", vraag:"Ondanks de lage insolatie in een polair klimaat kan passieve zonnewinst nog een rol spelen. Wat is de belangrijkste architecturale beperking, gegeven de zeer lage zonnestand?",
+      opties:["Grote glasoppervlakken verliezen 's winters meer warmte via geleiding dan ze aan zonnewinst opleveren, dus openingen moeten klein en goed geïsoleerd blijven","Glas isoleert perfect, dus grotere ramen zijn altijd voordelig in poolklimaten","Zonnewinst is volledig onmogelijk in poolklimaten, dus ramen zijn overbodig","De lage zonnestand heeft geen invloed op de grootte van openingen"], correct:0,
+      uitleg:"Bij een lage zonnestand leveren grote ramen weinig zonnewinst op, terwijl ze wel veel warmte via geleiding verliezen — vandaar de voorkeur voor kleine, sterk geïsoleerde openingen." },
+    { zoneKey:"6", vraag:"Gebouwen op permafrost worden vaak op een verhoogde fundering geplaatst, los van de grond. Welk mechanisme verklaart waarom een fundering die rechtstreeks op de grond rust hier problematisch is?",
+      opties:["Warmteverlies van het gebouw naar de bodem kan de permafrost doen ontdooien, waardoor de fundering instabiel wordt","Een fundering op de grond isoleert net te goed, waardoor het gebouw oververhit","Permafrost heeft geen enkele invloed op funderingen","Een verhoogde fundering is enkel esthetisch, niet functioneel"], correct:0,
+      uitleg:"Warmte die van het gebouw naar de bodem lekt, kan de permafrost doen ontdooien; een verhoogde, losstaande fundering voorkomt dat warmteverlies naar de grond." }
   ];
+
 
   var CITIES = [
 ["Brussel","België",50.85,4.35],["Amsterdam","Nederland",52.37,4.90],["Londen","Verenigd Koninkrijk",51.51,-0.13],
@@ -958,12 +924,15 @@
   }
   var pollTimer = null;
   var submitting = false;
+  // Elk toestel wacht een willekeurig extra beetje (0-3s) bovenop het basisritme,
+  // zodat niet honderd studenten exact tegelijk het bord raadplegen.
+  var pollJitter = Math.floor(Math.random() * 3000);
   function startPolling(){
     if (pollTimer) return;
     pollOnce();
     pollTimer = setInterval(function(){
       if (document.visibilityState === "visible" && !submitting) pollOnce();
-    }, POLL_MS);
+    }, POLL_MS + pollJitter);
   }
   document.addEventListener("visibilitychange", function(){
     if (document.visibilityState === "visible" && !submitting) pollOnce();
@@ -1193,7 +1162,50 @@
     }
   }
 
+  function renderRegistrationGate(){
+    quizPanel.style.display = "";
+    placementLayout.style.display = "none";
+    quizProgress.innerHTML = "";
+    quizQuestionEl.innerHTML = '<div class="quizquestion">'
+      + '<h2>Welkom</h2>'
+      + '<p style="color:var(--text-muted);font-size:13.5px;margin-bottom:14px;">Vul je naam in — dit is uitsluitend voor aanwezigheidsregistratie. Je antwoorden op de quiz blijven volledig anoniem en worden nergens aan je naam gekoppeld.</p>'
+      + '<div class="field"><label for="regNaamInput">Jouw naam</label><input type="text" id="regNaamInput" maxlength="60" autocomplete="off"></div>'
+      + '<button class="btn" id="regConfirmBtn" style="margin-top:12px;" disabled>Bevestig</button>'
+      + '<div class="status" id="regStatus"></div>'
+      + '</div>';
+    var input = document.getElementById("regNaamInput");
+    var btn = document.getElementById("regConfirmBtn");
+    input.addEventListener("input", function(){ btn.disabled = input.value.trim().length===0; });
+    input.focus();
+    function submitName(){
+      var naam = input.value.trim();
+      if (!naam) return;
+      btn.disabled = true; btn.textContent = "Bezig...";
+      var slug = slugify(naam);
+      apiSubmit({action:"registerName", slug:slug, naam:naam}).then(function(res){
+        if (res && res.ok){
+          ownName = naam; ownSlug = slug;
+          try{ localStorage.setItem("klimaatkaart_naam", naam); }catch(e){}
+          renderStudentView();
+        } else {
+          var st = document.getElementById("regStatus");
+          st.textContent = "Registreren mislukt: " + ((res&&res.error)||"onbekende fout") + ". Probeer opnieuw.";
+          st.className = "status show warn";
+          btn.disabled = false; btn.textContent = "Bevestig";
+        }
+      }).catch(function(){
+        var st = document.getElementById("regStatus");
+        st.textContent = "Kon niet verbinden met de server. Probeer opnieuw.";
+        st.className = "status show warn";
+        btn.disabled = false; btn.textContent = "Bevestig";
+      });
+    }
+    btn.addEventListener("click", submitName);
+    input.addEventListener("keydown", function(ev){ if (ev.key === "Enter" && !btn.disabled) submitName(); });
+  }
+
   function renderStudentView(){
+    if (!ownName){ renderRegistrationGate(); return; }
     if (state.fase === 0){
       quizPanel.style.display = "";
       placementLayout.style.display = "none";
@@ -1210,7 +1222,8 @@
   buildLegend(document.getElementById("legendT"));
 
   onStateChange(function(){
-    if (document.getElementById("view-student").classList.contains("active")) renderStudentView();
+    var typingName = document.activeElement && document.activeElement.id === "regNaamInput";
+    if (document.getElementById("view-student").classList.contains("active") && !typingName) renderStudentView();
     if (document.getElementById("view-docent").classList.contains("active") && state.isDocent) renderDocentView();
   });
 
@@ -1239,6 +1252,18 @@
   attachMapInteractions(mapCanvasT, teacherView, { onChange: renderTeacherMap });
   addZoomButtons(mapWrapT, teacherView, renderTeacherMap);
 
+  function bindSkipQuizBtn(){
+    var btn = document.getElementById("skipQuizBtn");
+    if (!btn) return;
+    btn.addEventListener("click", function(){
+      if (!confirm("Quiz overslaan en meteen naar het plaatsen van units gaan?")) return;
+      btn.disabled = true;
+      apiSubmit({action:"setFase", docent:docentCode, fase:1}).then(function(res){
+        btn.disabled = false;
+        if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
+      }).catch(function(){ btn.disabled = false; alert("Kon niet verbinden met de server."); });
+    });
+  }
   function renderDocentQuizControl(){
     var total = QUESTIONS.length;
     var idx = state.vraagIndex;
@@ -1249,8 +1274,10 @@
       return;
     }
     if (idx >= total){
-      html = '<p style="font-size:13.5px;">Alle '+total+' vragen zijn gesteld.</p>';
+      html = '<p style="font-size:13.5px;">Alle '+total+' vragen zijn gesteld.</p>'
+        + '<button class="btn secondary" id="skipQuizBtn" style="margin-top:10px;">Naar plaatsen van units →</button>';
       docentQuizControl.innerHTML = html;
+      bindSkipQuizBtn();
       return;
     }
     var q = QUESTIONS[idx];
@@ -1271,8 +1298,10 @@
       + '<div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">'
       + '<button class="btn secondary" id="toggleResultsBtn">'+(state.toonResultaten?'Verberg resultaten voor studenten':'Toon resultaten aan studenten')+'</button>'
       + '<button class="btn" id="nextQuestionBtn">'+(idx+1>=total?'Quiz afronden':'Volgende vraag →')+'</button>'
-      + '</div>';
+      + '</div>'
+      + '<button class="btn secondary" id="skipQuizBtn" style="margin-top:10px;">Quiz overslaan → meteen naar plaatsen van units</button>';
     docentQuizControl.innerHTML = html;
+    bindSkipQuizBtn();
 
     document.getElementById("toggleResultsBtn").addEventListener("click", function(){
       var btn = this; btn.disabled = true;
