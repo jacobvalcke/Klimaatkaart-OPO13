@@ -1314,11 +1314,21 @@
 
   function bindSkipQuizBtn(){
     var btn = document.getElementById("skipQuizBtn");
-    if (!btn) return;
-    btn.addEventListener("click", function(){
+    if (btn) btn.addEventListener("click", function(){
       if (!confirm("Quiz overslaan en meteen naar het plaatsen van units gaan?")) return;
       btn.disabled = true;
       apiSubmit({action:"setFase", docent:docentCode, fase:1}).then(function(res){
+        btn.disabled = false;
+        if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
+      }).catch(function(){ btn.disabled = false; alert("Kon niet verbinden met de server."); });
+    });
+  }
+  function bindResetQuizBtn(){
+    var btn = document.getElementById("resetQuizBtn");
+    if (btn) btn.addEventListener("click", function(){
+      if (!confirm("Volledige vragenlijst herstarten? Dit wist ALLE ingezonden antwoorden van alle studenten, voor alle vragen. Dit kan niet ongedaan gemaakt worden.")) return;
+      btn.disabled = true;
+      apiSubmit({action:"resetQuiz", docent:docentCode}).then(function(res){
         btn.disabled = false;
         if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
       }).catch(function(){ btn.disabled = false; alert("Kon niet verbinden met de server."); });
@@ -1335,9 +1345,21 @@
     }
     if (idx >= total){
       html = '<p style="font-size:13.5px;">Alle '+total+' vragen zijn gesteld.</p>'
-        + '<button class="btn secondary" id="skipQuizBtn" style="margin-top:10px;">Naar plaatsen van units →</button>';
+        + '<div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">'
+        + '<button class="btn secondary" id="prevQuestionBtn">← Vorige vraag</button>'
+        + '<button class="btn secondary" id="skipQuizBtn">Naar plaatsen van units →</button>'
+        + '</div>'
+        + '<button class="btn secondary" id="resetQuizBtn" style="margin-top:10px;">↺ Volledige vragenlijst herstarten</button>';
       docentQuizControl.innerHTML = html;
       bindSkipQuizBtn();
+      bindResetQuizBtn();
+      document.getElementById("prevQuestionBtn").addEventListener("click", function(){
+        var btn = this; btn.disabled = true;
+        apiSubmit({action:"nextQuestion", docent:docentCode, vraagIndex: total-1}).then(function(res){
+          btn.disabled = false;
+          if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
+        }).catch(function(){ btn.disabled = false; alert("Kon niet verbinden met de server."); });
+      });
       return;
     }
     var q = QUESTIONS[idx];
@@ -1356,13 +1378,27 @@
     });
     html += '</div>'
       + '<div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">'
+      + '<button class="btn secondary" id="prevQuestionBtn" '+(idx===0?'disabled':'')+'>← Vorige vraag</button>'
       + '<button class="btn secondary" id="toggleResultsBtn">'+(state.toonResultaten?'Verberg resultaten voor studenten':'Toon resultaten aan studenten')+'</button>'
       + '<button class="btn" id="nextQuestionBtn">'+(idx+1>=total?'Quiz afronden':'Volgende vraag →')+'</button>'
       + '</div>'
-      + '<button class="btn secondary" id="skipQuizBtn" style="margin-top:10px;">Quiz overslaan → meteen naar plaatsen van units</button>';
+      + '<div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">'
+      + '<button class="btn secondary" id="skipQuizBtn">Quiz overslaan → meteen naar plaatsen van units</button>'
+      + '<button class="btn secondary" id="resetQuizBtn">↺ Volledige vragenlijst herstarten</button>'
+      + '</div>';
     docentQuizControl.innerHTML = html;
     bindSkipQuizBtn();
+    bindResetQuizBtn();
 
+    if (idx > 0){
+      document.getElementById("prevQuestionBtn").addEventListener("click", function(){
+        var btn = this; btn.disabled = true;
+        apiSubmit({action:"nextQuestion", docent:docentCode, vraagIndex: idx-1}).then(function(res){
+          btn.disabled = false;
+          if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
+        }).catch(function(){ btn.disabled = false; alert("Kon niet verbinden met de server."); });
+      });
+    }
     document.getElementById("toggleResultsBtn").addEventListener("click", function(){
       var btn = this; btn.disabled = true;
       apiSubmit({action:"toggleResults", docent:docentCode, show: !state.toonResultaten}).then(function(res){
