@@ -311,13 +311,16 @@
   <!-- ================= STUDENTEN ================= -->
   <div id="view-student" class="view active">
 
-    <!-- Fase 0: quiz -->
+    <div class="modeswitch" id="studentSubTabs" role="tablist" aria-label="Onderdeel" style="display:none;margin-bottom:16px;">
+      <button id="subtab-quiz" role="tab">Vragenlijst</button>
+      <button id="subtab-placement" role="tab">Plaatsing van units</button>
+    </div>
+
     <div id="quizPanel" class="panel" style="padding:20px;">
       <div class="phasebar" id="quizProgress"></div>
       <div id="quizQuestion"></div>
     </div>
 
-    <!-- Fase 1-2: plaatsing -->
     <div id="placementLayout" class="layout" style="display:none;">
       <div class="panel mapcard">
         <div class="mapwrap empty" id="mapwrap">
@@ -329,7 +332,6 @@
       </div>
       <div class="side">
         <div class="panel" id="sidePanel" style="padding:18px;"></div>
-        <button class="btn secondary" id="viewQuizReviewBtn" type="button" style="width:100%;margin-top:10px;">Bekijk je quizvragen opnieuw</button>
       </div>
     </div>
   </div>
@@ -995,12 +997,13 @@
   var docentCode = "";
   try { docentCode = localStorage.getItem("klimaatkaart_docentcode") || ""; } catch(e){}
 
-  var state = { fase:0, isDocent:false, eigenAntwoorden:{}, resultaten:{}, studenten:[] };
+  var state = { quizOpen:false, placementOpen:false, isDocent:false, eigenAntwoorden:{}, resultaten:{}, studenten:[] };
   var stateListeners = [];
   function onStateChange(fn){ stateListeners.push(fn); }
   function pollOnce(){
     return apiGet({ slug: ownSlug, deviceId: deviceId, docent: docentCode }).then(function(data){
-      state.fase = data.fase || 0;
+      state.quizOpen = !!data.quizOpen;
+      state.placementOpen = !!data.placementOpen;
       state.isDocent = !!data.isDocent;
       state.eigenAntwoorden = data.eigenAntwoorden || {};
       state.resultaten = data.resultaten || {};
@@ -1032,27 +1035,19 @@
 
   var currentQuestionIndex = 0;
   var quizFinishedLocally = false;
-  var viewingQuizReview = false; // laat toe om de vragen nog te bekijken nadat de plaatsingsfase al gestart is
 
   function renderQuiz(){
     var total = QUESTIONS.length;
 
-    // Fase 0: de docent heeft de vragenlijst nog niet gestart.
-    if (state.fase === 0){
-      quizProgress.innerHTML = "";
-      quizQuestionEl.innerHTML = '<div class="quizwaiting">De docent moet de vragenlijst nog starten.<br>Even geduld.</div>';
-      return;
-    }
-
-    // Fase 2+: de docent heeft de vragenreeks afgesloten — geen bewerking meer mogelijk,
-    // maar wel nog vrij doorbladerbaar, ook nadat de plaatsingsfase al gestart is.
-    if (state.fase >= 2){
+    // Vragenlijst gesloten (nog niet geopend, of door de docent afgesloten):
+    // niet bewerkbaar, maar wel altijd vrij doorbladerbaar.
+    if (!state.quizOpen){
       var idx = currentQuestionIndex;
       var q = QUESTIONS[idx];
       var zone = ZONES[q.zoneKey];
       var myAnswer = state.eigenAntwoorden[idx];
       myAnswer = (myAnswer===undefined) ? null : myAnswer;
-      quizProgress.innerHTML = "Vraag " + (idx+1) + " van " + total + " — afgesloten, enkel ter inzage";
+      quizProgress.innerHTML = "Vraag " + (idx+1) + " van " + total + " — gesloten, enkel ter inzage";
 
       var html = '<div class="quizquestion">'
         + '<span class="quizzonelabel" style="background:'+zone.kleur+';color:'+zone.ink+';">'+zone.naam+'</span>'
@@ -1070,7 +1065,6 @@
         + '<button class="btn secondary" id="prevQBtn" '+(idx===0?'disabled':'')+'>← Vorige vraag</button>'
         + '<button class="btn secondary" id="nextQBtn" '+(idx>=total-1?'disabled':'')+'>Volgende vraag →</button>'
         + '</div>'
-        + (state.fase >= 3 ? '<button class="btn" id="backToPlacementBtn" style="margin-top:12px;width:100%;">← Terug naar plaatsing</button>' : '')
         + '</div>';
       quizQuestionEl.innerHTML = html;
 
@@ -1078,8 +1072,6 @@
       if (prevBtn2) prevBtn2.addEventListener("click", function(){ if (idx>0){ currentQuestionIndex--; renderQuiz(); } });
       var nextBtn2 = document.getElementById("nextQBtn");
       if (nextBtn2) nextBtn2.addEventListener("click", function(){ if (idx<total-1){ currentQuestionIndex++; renderQuiz(); } });
-      var backBtn = document.getElementById("backToPlacementBtn");
-      if (backBtn) backBtn.addEventListener("click", function(){ viewingQuizReview = false; renderStudentView(); });
       return;
     }
 
@@ -1192,12 +1184,10 @@
   function renderStudentMap(){
     setupCanvas(mapCanvas);
     var pins = [];
-    if (state.fase >= 3){
-      state.studenten.forEach(function(s){
-        if (s.lat==null || s.lon==null) return;
-        pins.push({ lat:s.lat, lon:s.lon, color: s.slug===ownSlug ? "#ffffff" : (zoneColorVar(s.zoneKey)||"#ffffff") });
-      });
-    }
+    state.studenten.forEach(function(s){
+      if (s.lat==null || s.lon==null) return;
+      pins.push({ lat:s.lat, lon:s.lon, color: s.slug===ownSlug ? "#ffffff" : (zoneColorVar(s.zoneKey)||"#ffffff") });
+    });
     var pendingDot = pendingPlacement ? {lat:pendingPlacement.lat, lon:pendingPlacement.lon} : null;
     drawMap(mapCanvas, pins, pendingDot, "#ffffff", studentView);
     mapWrap.classList.toggle("empty", pins.length===0 && !pendingDot);
@@ -1217,7 +1207,7 @@
   }
   attachMapInteractions(mapCanvas, studentView, {
     onTap: function(x,y){
-      if (state.fase !== 3) return;
+      if (!state.placementOpen) return;
       placeFromEvent(x,y, function(lat,lon,zoneKey){
         if (zoneKey === 0) { pendingPlacement = null; renderStudentMap(); renderSidePanel(); return; }
         pendingPlacement = {lat:lat, lon:lon, zoneKey:zoneKey};
@@ -1231,7 +1221,7 @@
   function renderSidePanel(){
     var mine = ownRecord();
 
-    if (state.fase === 3){
+    if (state.placementOpen){
       mapHint.textContent = "tik op de kaart om je unit te plaatsen";
       if (!ownName){
         sidePanel.innerHTML = '<div class="field"><label for="naamInput">Jouw naam</label>'
@@ -1289,17 +1279,18 @@
       return;
     }
 
-    if (state.fase === 4){
-      mapHint.textContent = "";
-      if (!mine || mine.lat==null){ sidePanel.innerHTML = '<div class="placeholder">Er is geen locatie geregistreerd voor jou.</div>'; return; }
-      var z4 = ZONES[mine.zoneKey];
-      sidePanel.innerHTML = '<div class="zonecard"><div class="zonecard-head" style="background:'+z4.kleur+';color:'+z4.ink+';">'
-        + '<span class="dot" style="background:'+z4.ink+';opacity:.85;"></span><h3>'+z4.naam+'</h3></div>'
-        + '<div class="zonecard-body"><div class="loc">'+locationLabel(mine.lat, mine.lon)+'</div>'
-        + '<ul class="decisions">'+z4.decisions.map(function(d){return '<li><span class="k">'+d[0]+'</span><span class="v">'+d[1]+'</span></li>';}).join("")+'</ul>'
-        + '<p class="kenmerken" style="margin-top:10px;">Je locatie is vastgelegd door de docent. Op de kaart zie je alle locaties van de klas; jouw unit is wit gemarkeerd.</p></div></div>';
+    // Plaatsen is niet (meer) open — alleen-lezen overzicht.
+    mapHint.textContent = "";
+    if (!mine || mine.lat==null){
+      sidePanel.innerHTML = '<div class="placeholder">Plaatsen van units is momenteel niet open. Je hebt nog geen locatie gekozen.</div>';
       return;
     }
+    var z4 = ZONES[mine.zoneKey];
+    sidePanel.innerHTML = '<div class="zonecard"><div class="zonecard-head" style="background:'+z4.kleur+';color:'+z4.ink+';">'
+      + '<span class="dot" style="background:'+z4.ink+';opacity:.85;"></span><h3>'+z4.naam+'</h3></div>'
+      + '<div class="zonecard-body"><div class="loc">'+locationLabel(mine.lat, mine.lon)+'</div>'
+      + '<ul class="decisions">'+z4.decisions.map(function(d){return '<li><span class="k">'+d[0]+'</span><span class="v">'+d[1]+'</span></li>';}).join("")+'</ul>'
+      + '<p class="kenmerken" style="margin-top:10px;">Plaatsen van units is momenteel gesloten. Op de kaart zie je alle locaties van de klas; jouw unit is wit gemarkeerd.</p></div></div>';
   }
 
   function renderRegistrationGate(){
@@ -1344,9 +1335,26 @@
     input.addEventListener("keydown", function(ev){ if (ev.key === "Enter" && !btn.disabled) submitName(); });
   }
 
+  var activeStudentTab = null; // "quiz" of "placement" — door de student zelf te kiezen
+  var studentSubTabs = document.getElementById("studentSubTabs");
+  var subtabQuizBtn = document.getElementById("subtab-quiz");
+  var subtabPlacementBtn = document.getElementById("subtab-placement");
+  subtabQuizBtn.addEventListener("click", function(){ activeStudentTab = "quiz"; renderStudentView(); });
+  subtabPlacementBtn.addEventListener("click", function(){ activeStudentTab = "placement"; renderStudentView(); });
+
   function renderStudentView(){
-    if (!ownName){ renderRegistrationGate(); return; }
-    if (state.fase <= 2 || viewingQuizReview){
+    if (!ownName){ studentSubTabs.style.display = "none"; renderRegistrationGate(); return; }
+    studentSubTabs.style.display = "inline-flex";
+
+    if (activeStudentTab === null){
+      // Eerste keer: kies een zinnig standaard tabblad op basis van wat open staat.
+      if (state.placementOpen && !state.quizOpen) activeStudentTab = "placement";
+      else activeStudentTab = "quiz";
+    }
+    subtabQuizBtn.classList.toggle("active", activeStudentTab==="quiz");
+    subtabPlacementBtn.classList.toggle("active", activeStudentTab==="placement");
+
+    if (activeStudentTab === "quiz"){
       quizPanel.style.display = "";
       placementLayout.style.display = "none";
       renderQuiz();
@@ -1364,14 +1372,12 @@
   var lastKnownAnswerCount = 0;
   onStateChange(function(){
     // Detecteer een reset: het aantal eigen antwoorden valt terug naar 0 terwijl
-    // er eerder wel al antwoorden waren, en de quiz staat weer op fase 0.
-    // Spring dan terug naar vraag 1 — anders blijft de student op de vraag staan
-    // waar die toevallig was blijven steken.
+    // er eerder wel al antwoorden waren. Spring dan terug naar vraag 1 — anders
+    // blijft de student op de vraag staan waar die toevallig was blijven steken.
     var currentAnswerCount = Object.keys(state.eigenAntwoorden||{}).length;
-    if (state.fase === 0 && currentAnswerCount === 0 && lastKnownAnswerCount > 0){
+    if (currentAnswerCount === 0 && lastKnownAnswerCount > 0){
       currentQuestionIndex = 0;
       quizFinishedLocally = false;
-      viewingQuizReview = false;
       overlopenActief = false;
       revealedQuestions = {};
     }
@@ -1418,21 +1424,10 @@
 
   var OPTION_COLORS = ["#5b8def","#e8894a","#8a6fd6","#3fa77e","#d65f8a"];
 
-  function bindSkipQuizBtn(){
-    var btn = document.getElementById("skipQuizBtn");
-    if (btn) btn.addEventListener("click", function(){
-      if (!confirm("Vragenlijst volledig overslaan en meteen naar het plaatsen van units gaan?")) return;
-      btn.disabled = true;
-      apiSubmit({action:"setFase", docent:docentCode, fase:3}).then(function(res){
-        btn.disabled = false;
-        if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
-      }).catch(function(){ btn.disabled = false; alert("Kon niet verbinden met de server."); });
-    });
-  }
   function bindResetQuizBtn(){
     var btn = document.getElementById("resetQuizBtn");
     if (btn) btn.addEventListener("click", function(){
-      if (!confirm("Volledige vragenlijst herstarten? Dit wist ALLE ingezonden antwoorden van alle studenten, voor alle vragen, en zet alles terug naar 'nog niet gestart'. Dit kan niet ongedaan gemaakt worden.")) return;
+      if (!confirm("Volledige vragenlijst herstarten? Dit wist ALLE ingezonden antwoorden van alle studenten, voor alle vragen, en sluit de vragenlijst. Dit kan niet ongedaan gemaakt worden.")) return;
       btn.disabled = true;
       apiSubmit({action:"resetQuiz", docent:docentCode}).then(function(res){
         btn.disabled = false;
@@ -1453,32 +1448,22 @@
   function renderDocentQuizControl(){
     var total = QUESTIONS.length;
 
-    if (state.fase === 0){
-      docentQuizControl.innerHTML = '<div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">De vragenlijst is nog niet gestart. Gebruik stap 1 hierboven zodra je klaar bent.</div>'
-        + '<button class="btn secondary" id="skipQuizBtn">Vragenlijst overslaan → plaatsen van units</button>';
-      bindSkipQuizBtn();
-      return;
-    }
-
-    if (state.fase === 1){
-      // Quiz actief: eenvoudig live overzicht van het aantal binnengekomen antwoorden per vraag.
+    if (state.quizOpen){
+      // Vragenlijst open: eenvoudig live overzicht van het aantal binnengekomen antwoorden per vraag.
       var rows = "";
       QUESTIONS.forEach(function(q, i){
         rows += '<div class="studentrow"><span>Vraag '+(i+1)+' — '+ZONES[q.zoneKey].naam+'</span><span>'+totalAnswersFor(i)+' antwoorden</span></div>';
       });
-      docentQuizControl.innerHTML = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">Quiz actief — studenten doorlopen de vragen op eigen tempo.</div>'
+      docentQuizControl.innerHTML = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">Vragenlijst open — studenten doorlopen de vragen op eigen tempo.</div>'
         + '<div style="max-height:260px;overflow:auto;margin-bottom:14px;">'+rows+'</div>'
-        + '<div style="display:flex; gap:10px; flex-wrap:wrap;">'
-        + '<button class="btn secondary" id="skipQuizBtn">Quiz overslaan → plaatsen van units</button>'
-        + '<button class="btn danger" id="resetQuizBtn">↺ Vragenlijst herstarten</button>'
-        + '</div>';
-      bindSkipQuizBtn(); bindResetQuizBtn();
+        + '<button class="btn danger" id="resetQuizBtn">↺ Vragenlijst herstarten</button>';
+      bindResetQuizBtn();
       return;
     }
 
-    // Fase 2+: quiz is afgesloten.
+    // Vragenlijst gesloten (nog niet geopend, of terug dichtgedaan).
     if (!overlopenActief){
-      docentQuizControl.innerHTML = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">Vragenreeks afgesloten. Gegevens liggen vast.</div>'
+      docentQuizControl.innerHTML = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">Vragenlijst gesloten.</div>'
         + '<div style="display:flex; gap:10px; flex-wrap:wrap;">'
         + '<button class="btn secondary" id="toggleOverlopenBtn">Vragen overlopen</button>'
         + '<button class="btn danger" id="resetQuizBtn">↺ Vragenlijst herstarten</button>'
@@ -1538,51 +1523,39 @@
     if (nBtn) nBtn.addEventListener("click", function(){ if (i<total-1){ overlopenIndex++; renderDocentQuizControl(); } });
   }
 
-  // De vier hoofdstappen, altijd samen en overzichtelijk bovenaan. Elke stap is
-  // pas klikbaar als de vorige stap gebeurd is (dus "afsluiten" kan pas na "starten").
-  var DOCENT_STAPPEN = [
-    { target:1, label:"1. Vragenlijst starten" },
-    { target:2, label:"2. Vragenlijst afsluiten" },
-    { target:3, label:"3. Plaatsen van units starten" },
-    { target:4, label:"4. Plaatsen van units afsluiten" }
-  ];
-  var FASENAMEN = ["Nog niet gestart","Quiz actief","Quiz afgesloten","Units plaatsen","Locaties vastgelegd"];
+  // Vragenlijst en plaatsing zijn twee volledig onafhankelijke schakelaars,
+  // zonder vaste volgorde — de docent bepaalt vrij wat wanneer open staat.
   function renderPhaseButtons(){
-    var html = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:10px;">Huidige status: <b>'+FASENAMEN[state.fase]+'</b></div>'
-      + '<div class="stepsgrid">';
-    DOCENT_STAPPEN.forEach(function(k){
-      var reachable = state.fase === k.target - 1; // enkel de eerstvolgende logische stap is klikbaar
-      var isPast = state.fase >= k.target;
-      var cls = reachable ? "primary-next" : (isPast ? "done" : "");
-      html += '<button data-target="'+k.target+'" class="'+cls+'" '+((!reachable)?'disabled':'')+'>'+k.label+(isPast?' ✓':'')+'</button>';
-    });
-    html += '</div>';
-    if (state.fase === 4){
-      html += '<button class="btn secondary" id="reopenPlacementBtn" style="margin-top:12px;">↺ Plaatsing terug openzetten</button>';
-    }
-    html += '<button class="btn danger" id="clearUnitsBtn" style="margin-top:12px;margin-left:'+(state.fase===4?'8px':'0')+';">🗑 Alle geplaatste units wissen</button>';
+    var html = '<div style="font-size:11.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Vragenlijst — '+(state.quizOpen?'open':'gesloten')+'</div>'
+      + '<div class="stepsgrid" style="grid-template-columns:1fr 1fr;margin-bottom:16px;">'
+      + '<button id="quizStartBtn" class="'+(!state.quizOpen?'primary-next':'done')+'" '+(state.quizOpen?'disabled':'')+'>Start vragenlijst</button>'
+      + '<button id="quizStopBtn" class="'+(state.quizOpen?'primary-next':'')+'" '+(!state.quizOpen?'disabled':'')+'>Sluit vragenlijst af</button>'
+      + '</div>'
+      + '<div style="font-size:11.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Plaatsen van units — '+(state.placementOpen?'open':'gesloten')+'</div>'
+      + '<div class="stepsgrid" style="grid-template-columns:1fr 1fr;">'
+      + '<button id="placeStartBtn" class="'+(!state.placementOpen?'primary-next':'done')+'" '+(state.placementOpen?'disabled':'')+'>Start plaatsen van units</button>'
+      + '<button id="placeStopBtn" class="'+(state.placementOpen?'primary-next':'')+'" '+(!state.placementOpen?'disabled':'')+'>Sluit plaatsen van units af</button>'
+      + '</div>'
+      + '<button class="btn danger" id="clearUnitsBtn" style="margin-top:16px;">🗑 Alle geplaatste units wissen</button>';
     phaseButtonsEl.innerHTML = html;
-    phaseButtonsEl.querySelectorAll("button[data-target]").forEach(function(btn){
+
+    function bindToggle(id, action, open){
+      var btn = document.getElementById(id);
       btn.addEventListener("click", function(){
-        var target = Number(btn.getAttribute("data-target"));
         btn.disabled = true;
-        apiSubmit({action:"setFase", docent:docentCode, fase:target}).then(function(res){
+        apiSubmit({action:action, docent:docentCode, open:open}).then(function(res){
           if (res && res.ok) pollOnce();
           else { renderPhaseButtons(); alert("Mislukt: " + ((res&&res.error)||"onbekende fout")); }
         }).catch(function(){ renderPhaseButtons(); alert("Kon niet verbinden met de server."); });
       });
-    });
-    var reopenBtn = document.getElementById("reopenPlacementBtn");
-    if (reopenBtn) reopenBtn.addEventListener("click", function(){
-      if (!confirm("Plaatsing terug openzetten? Studenten kunnen hun unit dan opnieuw verplaatsen.")) return;
-      reopenBtn.disabled = true;
-      apiSubmit({action:"setFase", docent:docentCode, fase:3}).then(function(res){
-        reopenBtn.disabled = false;
-        if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
-      }).catch(function(){ reopenBtn.disabled = false; alert("Kon niet verbinden met de server."); });
-    });
+    }
+    bindToggle("quizStartBtn", "setQuizOpen", true);
+    bindToggle("quizStopBtn", "setQuizOpen", false);
+    bindToggle("placeStartBtn", "setPlacementOpen", true);
+    bindToggle("placeStopBtn", "setPlacementOpen", false);
+
     var clearBtn = document.getElementById("clearUnitsBtn");
-    if (clearBtn) clearBtn.addEventListener("click", function(){
+    clearBtn.addEventListener("click", function(){
       if (!confirm("Alle geplaatste units wissen? Dit verwijdert de locatie/klimaatzone van ALLE studenten (hun naam blijft bewaard). Dit kan niet ongedaan gemaakt worden.")) return;
       clearBtn.disabled = true;
       apiSubmit({action:"resetPlacements", docent:docentCode}).then(function(res){
@@ -1593,12 +1566,15 @@
   }
 
   function renderStudentList(){
-    var sorted = state.studenten.slice().sort(function(a,b){ return (a.naam||"").localeCompare(b.naam||""); });
-    if (!sorted.length){ studentListEl.innerHTML = '<p>Nog geen studenten geregistreerd.</p>'; return; }
-    studentListEl.innerHTML = sorted.map(function(s){
-      var zn = s.zoneKey ? ((ZONES[s.zoneKey]||{}).naam || s.zoneKey) : "—";
-      return '<div class="studentrow"><span>'+escapeHtml(s.naam)+'</span><span>'+zn+(s.locatie?(' · '+escapeHtml(s.locatie)):'')+'</span></div>';
-    }).join("");
+    // Bewust GEEN namen op het scherm (enkel in de exportbare Excel-lijst) —
+    // dit overzicht kan geprojecteerd worden zonder studenten te identificeren.
+    var placed = state.studenten.filter(function(s){ return s.lat!=null; });
+    if (!placed.length){ studentListEl.innerHTML = '<p>Nog geen units geplaatst.</p>'; return; }
+    studentListEl.innerHTML = '<p style="margin-bottom:8px;">'+placed.length+' van '+state.studenten.length+' studenten hebben een unit geplaatst.</p>'
+      + placed.map(function(s, i){
+        var zn = s.zoneKey ? ((ZONES[s.zoneKey]||{}).naam || s.zoneKey) : "—";
+        return '<div class="studentrow"><span>Student '+(i+1)+'</span><span>'+zn+(s.locatie?(' · '+escapeHtml(s.locatie)):'')+'</span></div>';
+      }).join("");
   }
 
   function renderDocentView(){
@@ -1608,6 +1584,7 @@
     renderTeacherMap();
   }
 
+
   docentLoginBtn.addEventListener("click", function(){
     var code = docentCodeInput.value.trim();
     docentLoginBtn.disabled = true; docentLoginBtn.textContent = "Controleren...";
@@ -1616,7 +1593,7 @@
       if (data.isDocent){
         docentCode = code;
         try{ localStorage.setItem("klimaatkaart_docentcode", code); }catch(e){}
-        state.fase=data.fase; state.isDocent=true;
+        state.quizOpen=!!data.quizOpen; state.placementOpen=!!data.placementOpen; state.isDocent=true;
         state.eigenAntwoorden=data.eigenAntwoorden||{}; state.resultaten=data.resultaten||{}; state.studenten=data.studenten||[];
         docentGate.style.display = "none";
         docentContent.style.display = "";
@@ -1676,19 +1653,13 @@
   if (docentCode){
     apiGet({ docent: docentCode }).then(function(data){
       if (data.isDocent){
-        state.fase=data.fase; state.isDocent=true;
+        state.quizOpen=!!data.quizOpen; state.placementOpen=!!data.placementOpen; state.isDocent=true;
         state.eigenAntwoorden=data.eigenAntwoorden||{}; state.resultaten=data.resultaten||{}; state.studenten=data.studenten||[];
         docentGate.style.display = "none";
         docentContent.style.display = "";
       }
     });
   }
-
-  document.getElementById("viewQuizReviewBtn").addEventListener("click", function(){
-    viewingQuizReview = true;
-    currentQuestionIndex = 0;
-    renderStudentView();
-  });
 
   var resetIdentityLink = document.getElementById("resetIdentityLink");
   if (ownName){ resetIdentityLink.style.display = ""; }
