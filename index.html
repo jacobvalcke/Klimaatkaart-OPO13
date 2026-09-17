@@ -1454,7 +1454,9 @@
     var total = QUESTIONS.length;
 
     if (state.fase === 0){
-      docentQuizControl.innerHTML = '<div style="font-size:13px;color:var(--text-muted);">De vragenlijst is nog niet gestart. Gebruik stap 1 hierboven zodra je klaar bent.</div>';
+      docentQuizControl.innerHTML = '<div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">De vragenlijst is nog niet gestart. Gebruik stap 1 hierboven zodra je klaar bent.</div>'
+        + '<button class="btn secondary" id="skipQuizBtn">Vragenlijst overslaan → plaatsen van units</button>';
+      bindSkipQuizBtn();
       return;
     }
 
@@ -1558,9 +1560,7 @@
     if (state.fase === 4){
       html += '<button class="btn secondary" id="reopenPlacementBtn" style="margin-top:12px;">↺ Plaatsing terug openzetten</button>';
     }
-    if (state.fase >= 3){
-      html += '<button class="btn danger" id="clearUnitsBtn" style="margin-top:12px;margin-left:8px;">🗑 Alle geplaatste units wissen</button>';
-    }
+    html += '<button class="btn danger" id="clearUnitsBtn" style="margin-top:12px;margin-left:'+(state.fase===4?'8px':'0')+';">🗑 Alle geplaatste units wissen</button>';
     phaseButtonsEl.innerHTML = html;
     phaseButtonsEl.querySelectorAll("button[data-target]").forEach(function(btn){
       btn.addEventListener("click", function(){
