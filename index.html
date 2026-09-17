@@ -182,18 +182,23 @@
   .btn.secondary:hover{background:var(--surface-2);}
   .btn.danger{background:transparent;border:1.5px solid var(--warn);color:var(--warn);width:auto;min-height:40px;padding:9px 15px;font-size:13.5px;}
   .btn.danger:hover{background:color-mix(in srgb, var(--warn) 12%, transparent);}
-  .phasebtns button{
-    display:block; width:100%; text-align:left; padding:12px 16px; margin-bottom:10px;
+  .phasebtns{display:block;}
+  .stepsgrid{display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;}
+  @media (max-width: 720px){ .stepsgrid{grid-template-columns:1fr 1fr;} }
+  .stepsgrid button{
+    display:block; width:100%; text-align:center; padding:14px 10px; margin-bottom:0;
     border-radius:var(--radius-s); border:1.5px solid var(--border); background:var(--surface);
-    font:inherit; font-size:14px; color:var(--text); cursor:pointer;
+    font:inherit; font-size:13.5px; line-height:1.3; color:var(--text); cursor:pointer;
   }
-  .phasebtns button:last-child{margin-bottom:0;}
-  .phasebtns button:disabled{opacity:.4; cursor:not-allowed;}
-  .phasebtns button.primary-next{
+  .stepsgrid button:disabled{opacity:.4; cursor:not-allowed;}
+  .stepsgrid button.primary-next{
     border-color:var(--accent); background:var(--accent); color:#fff; font-weight:700;
     box-shadow:0 2px 10px color-mix(in srgb, var(--accent) 35%, transparent);
   }
-  .phasebtns button.primary-next:hover{background:var(--accent-strong);}
+  .stepsgrid button.primary-next:hover{background:var(--accent-strong);}
+  .stepsgrid button.done{
+    border-color:color-mix(in srgb, #2e7d32 40%, var(--border)); color:#2e7d32; opacity:.7;
+  }
 
   .status{font-size:14.5px;font-weight:600;padding:11px 13px;border-radius:var(--radius-s);margin-top:10px;display:none;}
   .status.show{display:block;}
@@ -340,6 +345,9 @@
     </div>
 
     <div id="docentContent" style="display:none;">
+      <div class="panel" id="phaseButtonsWrap" style="padding:16px 18px;">
+        <div class="phasebtns" id="phaseButtons"></div>
+      </div>
       <div class="panel" id="docentQuizControl" style="padding:14px 18px;"></div>
 
       <div class="layout">
@@ -350,8 +358,7 @@
           <div class="legend" id="legendT"></div>
         </div>
         <div class="panel" style="padding:18px;">
-          <div class="phasebtns" id="phaseButtons"></div>
-          <h3 style="font-size:13.5px;margin:18px 0 10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Studenten &amp; locaties</h3>
+          <h3 style="font-size:13.5px;margin:0 0 10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Studenten &amp; locaties</h3>
           <div id="studentList" style="font-size:12.5px;color:var(--text-muted);max-height:220px;overflow:auto;"></div>
           <div class="exportbtns">
             <button class="btn secondary" id="exportStudentenBtn" type="button">Exporteer studentenlijst (.xlsx)</button>
@@ -980,9 +987,16 @@
   function renderQuiz(){
     var total = QUESTIONS.length;
 
-    // Fase 1+: de docent heeft de vragenreeks afgesloten — geen bewerking meer mogelijk,
+    // Fase 0: de docent heeft de vragenlijst nog niet gestart.
+    if (state.fase === 0){
+      quizProgress.innerHTML = "";
+      quizQuestionEl.innerHTML = '<div class="quizwaiting">De docent moet de vragenlijst nog starten.<br>Even geduld.</div>';
+      return;
+    }
+
+    // Fase 2+: de docent heeft de vragenreeks afgesloten — geen bewerking meer mogelijk,
     // maar wel nog vrij doorbladerbaar, ook nadat de plaatsingsfase al gestart is.
-    if (state.fase >= 1){
+    if (state.fase >= 2){
       var idx = currentQuestionIndex;
       var q = QUESTIONS[idx];
       var zone = ZONES[q.zoneKey];
@@ -1006,7 +1020,7 @@
         + '<button class="btn secondary" id="prevQBtn" '+(idx===0?'disabled':'')+'>← Vorige vraag</button>'
         + '<button class="btn secondary" id="nextQBtn" '+(idx>=total-1?'disabled':'')+'>Volgende vraag →</button>'
         + '</div>'
-        + (state.fase >= 2 ? '<button class="btn" id="backToPlacementBtn" style="margin-top:12px;width:100%;">← Terug naar plaatsing</button>' : '')
+        + (state.fase >= 3 ? '<button class="btn" id="backToPlacementBtn" style="margin-top:12px;width:100%;">← Terug naar plaatsing</button>' : '')
         + '</div>';
       quizQuestionEl.innerHTML = html;
 
@@ -1128,7 +1142,7 @@
   function renderStudentMap(){
     setupCanvas(mapCanvas);
     var pins = [];
-    if (state.fase >= 2){
+    if (state.fase >= 3){
       state.studenten.forEach(function(s){
         if (s.lat==null || s.lon==null) return;
         pins.push({ lat:s.lat, lon:s.lon, color: s.slug===ownSlug ? "#ffffff" : (zoneColorVar(s.zoneKey)||"#ffffff") });
@@ -1153,7 +1167,7 @@
   }
   attachMapInteractions(mapCanvas, studentView, {
     onTap: function(x,y){
-      if (state.fase !== 2) return;
+      if (state.fase !== 3) return;
       placeFromEvent(x,y, function(lat,lon,zoneKey){
         if (zoneKey === 0) { pendingPlacement = null; renderStudentMap(); renderSidePanel(); return; }
         pendingPlacement = {lat:lat, lon:lon, zoneKey:zoneKey};
@@ -1167,7 +1181,7 @@
   function renderSidePanel(){
     var mine = ownRecord();
 
-    if (state.fase === 2){
+    if (state.fase === 3){
       mapHint.textContent = "tik op de kaart om je unit te plaatsen";
       if (!ownName){
         sidePanel.innerHTML = '<div class="field"><label for="naamInput">Jouw naam</label>'
@@ -1225,7 +1239,7 @@
       return;
     }
 
-    if (state.fase === 3){
+    if (state.fase === 4){
       mapHint.textContent = "";
       if (!mine || mine.lat==null){ sidePanel.innerHTML = '<div class="placeholder">Er is geen locatie geregistreerd voor jou.</div>'; return; }
       var z4 = ZONES[mine.zoneKey];
@@ -1282,7 +1296,7 @@
 
   function renderStudentView(){
     if (!ownName){ renderRegistrationGate(); return; }
-    if (state.fase <= 1 || viewingQuizReview){
+    if (state.fase <= 2 || viewingQuizReview){
       quizPanel.style.display = "";
       placementLayout.style.display = "none";
       renderQuiz();
@@ -1348,9 +1362,9 @@
   function bindSkipQuizBtn(){
     var btn = document.getElementById("skipQuizBtn");
     if (btn) btn.addEventListener("click", function(){
-      if (!confirm("Quizfase volledig overslaan en meteen naar het plaatsen van units gaan?")) return;
+      if (!confirm("Vragenlijst volledig overslaan en meteen naar het plaatsen van units gaan?")) return;
       btn.disabled = true;
-      apiSubmit({action:"setFase", docent:docentCode, fase:2}).then(function(res){
+      apiSubmit({action:"setFase", docent:docentCode, fase:3}).then(function(res){
         btn.disabled = false;
         if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
       }).catch(function(){ btn.disabled = false; alert("Kon niet verbinden met de server."); });
@@ -1359,20 +1373,9 @@
   function bindResetQuizBtn(){
     var btn = document.getElementById("resetQuizBtn");
     if (btn) btn.addEventListener("click", function(){
-      if (!confirm("Volledige vragenlijst herstarten? Dit wist ALLE ingezonden antwoorden van alle studenten, voor alle vragen. Dit kan niet ongedaan gemaakt worden.")) return;
+      if (!confirm("Volledige vragenlijst herstarten? Dit wist ALLE ingezonden antwoorden van alle studenten, voor alle vragen, en zet alles terug naar 'nog niet gestart'. Dit kan niet ongedaan gemaakt worden.")) return;
       btn.disabled = true;
       apiSubmit({action:"resetQuiz", docent:docentCode}).then(function(res){
-        btn.disabled = false;
-        if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
-      }).catch(function(){ btn.disabled = false; alert("Kon niet verbinden met de server."); });
-    });
-  }
-  function bindEndQuizBtn(){
-    var btn = document.getElementById("endQuizBtn");
-    if (btn) btn.addEventListener("click", function(){
-      if (!confirm("Vragenreeks beëindigen? Studenten kunnen hun antwoorden dan niet meer aanpassen. De gegevens blijven bewaard zoals ze nu staan.")) return;
-      btn.disabled = true;
-      apiSubmit({action:"setFase", docent:docentCode, fase:1}).then(function(res){
         btn.disabled = false;
         if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
       }).catch(function(){ btn.disabled = false; alert("Kon niet verbinden met de server."); });
@@ -1392,6 +1395,11 @@
     var total = QUESTIONS.length;
 
     if (state.fase === 0){
+      docentQuizControl.innerHTML = '<div style="font-size:13px;color:var(--text-muted);">De vragenlijst is nog niet gestart. Gebruik stap 1 hierboven zodra je klaar bent.</div>';
+      return;
+    }
+
+    if (state.fase === 1){
       // Quiz actief: eenvoudig live overzicht van het aantal binnengekomen antwoorden per vraag.
       var rows = "";
       QUESTIONS.forEach(function(q, i){
@@ -1400,15 +1408,14 @@
       docentQuizControl.innerHTML = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">Quiz actief — studenten doorlopen de vragen op eigen tempo.</div>'
         + '<div style="max-height:260px;overflow:auto;margin-bottom:14px;">'+rows+'</div>'
         + '<div style="display:flex; gap:10px; flex-wrap:wrap;">'
-        + '<button class="btn" id="endQuizBtn">Vragenreeks beëindigen</button>'
         + '<button class="btn secondary" id="skipQuizBtn">Quiz overslaan → plaatsen van units</button>'
         + '<button class="btn danger" id="resetQuizBtn">↺ Vragenlijst herstarten</button>'
         + '</div>';
-      bindEndQuizBtn(); bindSkipQuizBtn(); bindResetQuizBtn();
+      bindSkipQuizBtn(); bindResetQuizBtn();
       return;
     }
 
-    // Fase 1+: quiz is afgesloten.
+    // Fase 2+: quiz is afgesloten.
     if (!overlopenActief){
       docentQuizControl.innerHTML = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">Vragenreeks afgesloten. Gegevens liggen vast.</div>'
         + '<div style="display:flex; gap:10px; flex-wrap:wrap;">'
@@ -1470,19 +1477,25 @@
     if (nBtn) nBtn.addEventListener("click", function(){ if (i<total-1){ overlopenIndex++; renderDocentQuizControl(); } });
   }
 
-  var FASE_KNOPPEN = [
-    { target:2, label:"Start plaatsen van units" },
-    { target:3, label:"Locaties vastleggen" }
+  // De vier hoofdstappen, altijd samen en overzichtelijk bovenaan. Elke stap is
+  // pas klikbaar als de vorige stap gebeurd is (dus "afsluiten" kan pas na "starten").
+  var DOCENT_STAPPEN = [
+    { target:1, label:"1. Vragenlijst starten" },
+    { target:2, label:"2. Vragenlijst afsluiten" },
+    { target:3, label:"3. Plaatsen van units starten" },
+    { target:4, label:"4. Plaatsen van units afsluiten" }
   ];
+  var FASENAMEN = ["Nog niet gestart","Quiz actief","Quiz afgesloten","Units plaatsen","Locaties vastgelegd"];
   function renderPhaseButtons(){
-    var fasenaam = ["Quiz actief","Quiz afgesloten","Units plaatsen","Locaties vastgelegd"][state.fase] || "";
-    var html = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">Huidige fase: <b>'+fasenaam+'</b></div>';
-    FASE_KNOPPEN.forEach(function(k){
+    var html = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:10px;">Huidige status: <b>'+FASENAMEN[state.fase]+'</b></div>'
+      + '<div class="stepsgrid">';
+    DOCENT_STAPPEN.forEach(function(k){
       var reachable = state.fase === k.target - 1; // enkel de eerstvolgende logische stap is klikbaar
       var isPast = state.fase >= k.target;
-      var cls = reachable ? "primary-next" : "";
+      var cls = reachable ? "primary-next" : (isPast ? "done" : "");
       html += '<button data-target="'+k.target+'" class="'+cls+'" '+((!reachable)?'disabled':'')+'>'+k.label+(isPast?' ✓':'')+'</button>';
     });
+    html += '</div>';
     phaseButtonsEl.innerHTML = html;
     phaseButtonsEl.querySelectorAll("button[data-target]").forEach(function(btn){
       btn.addEventListener("click", function(){
@@ -1506,8 +1519,8 @@
   }
 
   function renderDocentView(){
-    renderDocentQuizControl();
     renderPhaseButtons();
+    renderDocentQuizControl();
     renderStudentList();
     renderTeacherMap();
   }
