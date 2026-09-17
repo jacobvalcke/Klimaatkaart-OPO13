@@ -354,6 +354,7 @@
         <div class="panel mapcard">
           <div class="mapwrap" id="mapwrapT" style="cursor:default;">
             <canvas id="mapCanvasT"></canvas>
+            <button class="fsbtn" id="fsBtnT" type="button" aria-label="Volledig scherm">⤢ Vergroten</button>
           </div>
           <div class="legend" id="legendT"></div>
         </div>
@@ -560,9 +561,51 @@
 ["Montevideo","Uruguay",-34.90,-56.16],["Asunción","Paraguay",-25.28,-57.63],["Manaus","Brazilië",-3.12,-60.02],
 ["Brasília","Brazilië",-15.79,-47.88],["Recife","Brazilië",-8.05,-34.90],["Ushuaia","Argentinië",-54.80,-68.30],
 ["Longyearbyen","Noorwegen (Spitsbergen)",78.22,15.63],["Nuuk","Groenland",64.18,-51.69],["McMurdo-basis","Antarctica",-77.85,166.67],
-["Casey-basis","Antarctica",-66.28,110.53],["Vostok-basis","Antarctica",-78.46,106.84]
+["Casey-basis","Antarctica",-66.28,110.53],["Vostok-basis","Antarctica",-78.46,106.84],
+// --- uitbreiding: extra steden voor een fijnmaziger dekking ---
+["Antwerpen","België",51.22,4.40],["Gent","België",51.05,3.72],["Charleroi","België",50.41,4.44],["Luik","België",50.63,5.57],["Brugge","België",51.21,3.22],
+["Rotterdam","Nederland",51.92,4.48],["Den Haag","Nederland",52.08,4.31],["Utrecht","Nederland",52.09,5.12],["Eindhoven","Nederland",51.44,5.48],
+["Lyon","Frankrijk",45.76,4.84],["Marseille","Frankrijk",43.30,5.37],["Toulouse","Frankrijk",43.60,1.44],["Nantes","Frankrijk",47.22,-1.55],["Lille","Frankrijk",50.63,3.06],["Straatsburg","Frankrijk",48.58,7.75],
+["Hamburg","Duitsland",53.55,9.99],["Keulen","Duitsland",50.94,6.96],["Frankfurt am Main","Duitsland",50.11,8.68],["Stuttgart","Duitsland",48.78,9.18],["Dortmund","Duitsland",51.51,7.47],["Leipzig","Duitsland",51.34,12.37],["Dresden","Duitsland",51.05,13.74],["Hannover","Duitsland",52.37,9.73],["Nürnberg","Duitsland",49.45,11.08],
+["Birmingham","Verenigd Koninkrijk",52.48,-1.90],["Manchester","Verenigd Koninkrijk",53.48,-2.24],["Glasgow","Verenigd Koninkrijk",55.86,-4.25],["Liverpool","Verenigd Koninkrijk",53.41,-2.98],["Leeds","Verenigd Koninkrijk",53.80,-1.55],["Edinburgh","Verenigd Koninkrijk",55.95,-3.19],
+["Milaan","Italië",45.46,9.19],["Turijn","Italië",45.07,7.69],["Palermo","Italië",38.12,13.36],["Genua","Italië",44.41,8.93],["Bologna","Italië",44.49,11.34],["Florence","Italië",43.77,11.26],["Venetië","Italië",45.44,12.32],["Bari","Italië",41.12,16.87],
+["Sevilla","Spanje",37.39,-5.99],["Valencia","Spanje",39.47,-0.38],["Bilbao","Spanje",43.26,-2.93],["Málaga","Spanje",36.72,-4.42],["Zaragoza","Spanje",41.65,-0.89],["Palma de Mallorca","Spanje",39.57,2.65],
+["Porto","Portugal",41.15,-8.61],["Krakau","Polen",50.06,19.94],["Wrocław","Polen",51.11,17.04],["Gdańsk","Polen",54.35,18.65],["Poznań","Polen",52.41,16.93],["Łódź","Polen",51.77,19.46],
+["Göteborg","Zweden",57.71,11.97],["Malmö","Zweden",55.60,13.00],["Bergen","Noorwegen",60.39,5.32],["Aarhus","Denemarken",56.16,10.20],["Tampere","Finland",61.50,23.79],
+["Thessaloniki","Griekenland",40.64,22.94],["Palma","Kroatië",45.34,14.44],["Zagreb","Kroatië",45.81,15.98],["Belgrado","Servië",44.79,20.45],["Sarajevo","Bosnië en Herzegovina",43.86,18.41],["Ljubljana","Slovenië",46.06,14.51],["Bratislava","Slowakije",48.15,17.11],["Vilnius","Litouwen",54.69,25.28],["Riga","Letland",56.95,24.11],["Minsk","Wit-Rusland",53.90,27.57],["Chișinău","Moldavië",47.01,28.86],
+["Charkiv","Oekraïne",50.00,36.23],["Odesa","Oekraïne",46.48,30.72],["Dnipro","Oekraïne",48.46,35.05],["Sint-Petersburg","Rusland",59.93,30.34],["Kazan","Rusland",55.79,49.12],["Nizjni Novgorod","Rusland",56.33,44.00],["Samara","Rusland",53.20,50.15],["Rostov aan de Don","Rusland",47.24,39.71],["Krasnojarsk","Rusland",56.01,92.87],["Omsk","Rusland",54.99,73.37],["Perm","Rusland",58.01,56.23],["Volgograd","Rusland",48.71,44.51],["Chabarovsk","Rusland",48.48,135.08],
+["Adana","Turkije",37.00,35.32],["İzmir","Turkije",38.42,27.14],["Ankara","Turkije",39.93,32.86],["Bursa","Turkije",40.18,29.06],["Antalya","Turkije",36.88,30.70],
+["Tel Aviv","Israël",32.08,34.78],["Amman","Jordanië",31.95,35.93],["Beiroet","Libanon",33.89,35.50],["Damascus","Syrië",33.51,36.28],["Doha","Qatar",25.29,51.53],["Koeweit-Stad","Koeweit",29.38,47.98],["Manama","Bahrein",26.23,50.58],["Muscat","Oman",23.61,58.59],["Abu Dhabi","Ver. Arabische Emiraten",24.45,54.38],["Jeddah","Saoedi-Arabië",21.49,39.19],["Mekka","Saoedi-Arabië",21.39,39.86],["Isfahan","Iran",32.65,51.67],["Mashhad","Iran",36.30,59.61],["Tabriz","Iran",38.08,46.29],
+["Lahore","Pakistan",31.55,74.34],["Faisalabad","Pakistan",31.42,73.08],["Peshawar","Pakistan",34.01,71.58],["Islamabad","Pakistan",33.68,73.05],["Multan","Pakistan",30.20,71.47],
+["Ahmedabad","India",23.02,72.57],["Chennai","India",13.08,80.27],["Hyderabad","India",17.39,78.49],["Pune","India",18.52,73.86],["Surat","India",21.17,72.83],["Jaipur","India",26.91,75.79],["Lucknow","India",26.85,80.95],["Kanpur","India",26.45,80.33],["Nagpur","India",21.15,79.09],["Indore","India",22.72,75.86],["Patna","India",25.59,85.14],["Kolkata","India",22.57,88.36],["Bhopal","India",23.26,77.41],["Visakhapatnam","India",17.69,83.22],["Kochi","India",9.93,76.27],["Guwahati","India",26.14,91.74],["Srinagar","India",34.08,74.80],
+["Chittagong","Bangladesh",22.36,91.78],["Yangon","Myanmar",16.87,96.20],["Phnom Penh","Cambodja",11.56,104.92],["Vientiane","Laos",17.97,102.60],["Da Nang","Vietnam",16.05,108.22],["Ho Chi Minhstad","Vietnam",10.82,106.63],
+["Chengdu","China",30.57,104.07],["Wuhan","China",30.59,114.30],["Tianjin","China",39.13,117.20],["Guangzhou","China",23.13,113.26],["Shenzhen","China",22.54,114.06],["Nanjing","China",32.06,118.80],["Hangzhou","China",30.27,120.15],["Harbin","China",45.80,126.53],["Shenyang","China",41.80,123.43],["Kunming","China",25.04,102.72],["Ürümqi","China",43.83,87.62],["Lhasa","China",29.65,91.14],["Hongkong","China",22.32,114.17],["Taipei","Taiwan",25.03,121.57],
+["Osaka","Japan",34.69,135.50],["Nagoya","Japan",35.18,136.91],["Sapporo","Japan",43.06,141.35],["Fukuoka","Japan",33.59,130.40],["Busan","Zuid-Korea",35.18,129.08],
+["Surabaya","Indonesië",-7.25,112.75],["Bandung","Indonesië",-6.91,107.61],["Medan","Indonesië",3.59,98.67],["Makassar","Indonesië",-5.15,119.43],["Cebu-stad","Filipijnen",10.32,123.90],["Davao","Filipijnen",7.07,125.61],["Chiang Mai","Thailand",18.79,98.99],["Johor Bahru","Maleisië",1.49,103.74],
+["Adelaide","Australië",-34.93,138.60],["Canberra","Australië",-35.28,149.13],["Hobart","Australië",-42.88,147.33],["Christchurch","Nieuw-Zeeland",-43.53,172.64],["Wellington","Nieuw-Zeeland",-41.29,174.78],
+["Lagos (Ikeja)","Nigeria",6.60,3.35],["Kano","Nigeria",12.00,8.52],["Ibadan","Nigeria",7.38,3.90],["Alexandrië","Egypte",31.20,29.92],["Gizeh","Egypte",30.01,31.21],["Rabat","Marokko",34.02,-6.83],["Marrakech","Marokko",31.63,-7.99],["Fez","Marokko",34.03,-5.00],["Oran","Algerije",35.70,-0.63],["Bengazi","Libië",32.12,20.07],["Mombasa","Kenia",-4.04,39.67],["Dodoma","Tanzania",-6.16,35.75],["Bulawayo","Zimbabwe",-20.15,28.58],["Harare","Zimbabwe",-17.83,31.05],["Lusaka","Zambia",-15.39,28.32],["Pretoria","Zuid-Afrika",-25.75,28.19],["Durban","Zuid-Afrika",-29.86,31.02],["Port Elizabeth","Zuid-Afrika",-33.96,25.60],["Abuja","Nigeria",9.08,7.40],["Freetown","Sierra Leone",8.48,-13.23],["Bamako","Mali",12.65,-8.00],["Ouagadougou","Burkina Faso",12.37,-1.52],["Niamey","Niger",13.51,2.11],["N'Djamena","Tsjaad",12.13,15.06],
+["Chicago (Midwest)","Verenigde Staten",41.88,-87.63],["Detroit","Verenigde Staten",42.33,-83.05],["Boston","Verenigde Staten",42.36,-71.06],["Philadelphia","Verenigde Staten",39.95,-75.17],["Atlanta","Verenigde Staten",33.75,-84.39],["Dallas","Verenigde Staten",32.78,-96.80],["San Antonio","Verenigde Staten",29.42,-98.49],["Austin","Verenigde Staten",30.27,-97.74],["San Diego","Verenigde Staten",32.72,-117.16],["Las Vegas","Verenigde Staten",36.17,-115.14],["Salt Lake City","Verenigde Staten",40.76,-111.89],["Minneapolis","Verenigde Staten",44.98,-93.27],["Kansas City","Verenigde Staten",39.10,-94.58],["St. Louis","Verenigde Staten",38.63,-90.20],["Nashville","Verenigde Staten",36.16,-86.78],["Oklahoma City","Verenigde Staten",35.47,-97.52],["Omaha","Verenigde Staten",41.26,-95.94],["Billings","Verenigde Staten",45.78,-108.50],["El Paso","Verenigde Staten",31.76,-106.49],["Portland","Verenigde Staten",45.52,-122.68],["Fairbanks","Verenigde Staten",64.84,-147.72],["Calgary","Canada",51.05,-114.07],["Edmonton","Canada",53.55,-113.49],["Ottawa","Canada",45.42,-75.70],["Halifax","Canada",44.65,-63.57],["Regina","Canada",50.45,-104.62],["Whitehorse","Canada",60.72,-135.05],
+["Monterrey","Mexico",25.67,-100.31],["Guadalajara","Mexico",20.66,-103.35],["Tijuana","Mexico",32.51,-117.04],["Mérida","Mexico",20.97,-89.62],["San José","Costa Rica",9.93,-84.08],["Santo Domingo","Dominicaanse Republiek",18.49,-69.94],["San Juan","Puerto Rico",18.47,-66.11],["Kingston","Jamaica",18.02,-76.80],
+["Córdoba","Argentinië",-31.42,-64.18],["Rosario","Argentinië",-32.95,-60.64],["Mendoza","Argentinië",-32.89,-68.85],["Salta","Argentinië",-24.79,-65.41],["Comodoro Rivadavia","Argentinië",-45.86,-67.50],["Valparaíso","Chili",-33.05,-71.62],["Concepción","Chili",-36.83,-73.05],["Punta Arenas","Chili",-53.16,-70.91],["Medellín","Colombia",6.25,-75.56],["Cali","Colombia",3.45,-76.53],["Barranquilla","Colombia",10.96,-74.80],["Guayaquil","Ecuador",-2.19,-79.89],["Arequipa","Peru",-16.41,-71.54],["Cusco","Peru",-13.53,-71.97],["Belém","Brazilië",-1.46,-48.48],["Fortaleza","Brazilië",-3.73,-38.53],["Salvador","Brazilië",-12.97,-38.51],["Curitiba","Brazilië",-25.43,-49.27],["Porto Alegre","Brazilië",-30.03,-51.23],["Belo Horizonte","Brazilië",-19.92,-43.94],["Goiânia","Brazilië",-16.68,-49.25],["Santa Cruz de la Sierra","Bolivia",-17.78,-63.18]
 ]
 ;
+
+  /* Streek-/regionamen als vangnet, voor wanneer geen enkele stad hierboven
+     binnen een zinnige afstand ligt. Bewust géén officiële bestuurlijke
+     regio's/provincies — dat verschilt te veel per land om hier betrouwbaar
+     samen te stellen — wel herkenbare, brede geografische aanduidingen.
+     Formaat: [naam, land, lat, lon]. */
+  var REGIONS = [
+["Amazonebekken","Brazilië",-4.0,-63.0],["Mato Grosso","Brazilië",-13.0,-56.0],["Patagonië","Argentinië",-45.0,-69.0],["Patagonië","Chili",-48.0,-73.5],["Gran Chaco","Paraguay",-23.0,-60.0],["Atacamawoestijn","Chili",-23.5,-68.5],["Altiplano","Bolivia",-18.0,-67.5],["Pampa's","Argentinië",-35.0,-63.0],
+["Sahara","Algerije",26.0,2.0],["Sahara","Libië",25.0,17.0],["Sahara","Mali",20.0,-2.0],["Sahel","Niger",15.5,8.0],["Sahel","Tsjaad",13.5,17.0],["Kalahariwoestijn","Botswana",-23.0,22.0],["Namibwoestijn","Namibië",-24.0,15.5],["Ogaden","Ethiopië",7.0,44.0],["Congobekken","D.R. Congo",-1.0,22.0],["Danakil-woestijn","Ethiopië",13.0,40.5],
+["Siberië (west)","Rusland",61.0,68.0],["Siberië (centraal)","Rusland",63.0,93.0],["Siberië (oost)","Rusland",63.0,143.0],["Kamtsjatka","Rusland",56.0,159.0],["Oeralgebergte","Rusland",60.0,59.5],["Karelië","Rusland",64.0,32.5],["Laponia","Zweden",67.5,19.0],["Laponia","Finland",68.0,26.0],["Novaja Zemlja","Rusland",73.0,55.0],
+["Gobiwoestijn","Mongolië",43.5,103.5],["Taklamakanwoestijn","China",39.0,82.0],["Tibetaans Plateau","China",32.0,88.0],["Centraal-Anatolië","Turkije",39.0,34.0],["Kaukasus","Georgië",42.3,43.5],["Centraal-Azië (steppe)","Kazachstan",48.0,68.0],["Karakoemwoestijn","Turkmenistan",39.0,60.0],["Rub al Khali","Saoedi-Arabië",20.0,51.0],["Negev-woestijn","Israël",30.8,34.8],["Iraanse hoogvlakte","Iran",32.5,54.0],
+["Binnen-Mongolië","China",42.0,112.0],["Mantsjoerije","China",46.0,125.0],["Deccan-plateau","India",17.0,77.0],["Thar-woestijn","India",27.0,71.5],["Himalaya (voorland)","Nepal",28.3,84.0],
+["Outback (centraal)","Australië",-25.0,133.5],["Outback (west)","Australië",-25.0,122.0],["Great Victoria-woestijn","Australië",-29.0,127.0],["Nullarbor-vlakte","Australië",-31.0,129.0],["Arnhemland","Australië",-13.0,133.5],
+["Rocky Mountains","Verenigde Staten",43.0,-109.5],["Great Plains","Verenigde Staten",41.0,-100.0],["Mojavewoestijn","Verenigde Staten",35.5,-116.0],["Appalachen","Verenigde Staten",37.5,-81.5],["Prairies","Canada",52.0,-106.0],["Canadese Arctische eilanden","Canada",75.0,-95.0],["Boreale bosgordel","Canada",55.0,-120.0],["Alaska (binnenland)","Verenigde Staten",64.5,-153.0],
+["Andes (centraal)","Peru",-10.0,-76.0],["Andes (noord)","Colombia",4.5,-74.5],["Orinocobekken","Venezuela",7.5,-66.0],["Guyana Hoogland","Guyana",4.5,-59.5],["Sertão","Brazilië",-9.0,-40.0],
+["Karpaten","Roemenië",45.6,25.3],["Balkangebergte","Bulgarije",42.7,25.0],["Centraal-Massief","Frankrijk",45.0,3.0],["Beierse Alpen","Duitsland",47.5,11.0],["Schotse Hooglanden","Verenigd Koninkrijk",57.2,-4.7],["Ardennen","België",50.2,5.6],["IJsland (binnenland)","IJsland",64.9,-18.5],["Groenland (ijskap)","Groenland",72.0,-40.0]
+  ];
 
   /* ===================== DATA: klimaatraster (Köppen-Geiger, vereenvoudigd) ===================== */
   var GRID_ROWS = 1800, GRID_COLS = 3600, GRID_STEP = 0.1;
@@ -606,17 +649,21 @@
     return 0;
   }
 
-  function nearestCity(lat, lon){
+  function nearestInList_(list, lat, lon){
     var best=null, bestD=Infinity;
     var rad = Math.PI/180;
-    for (var i=0;i<CITIES.length;i++){
-      var c = CITIES[i];
+    for (var i=0;i<list.length;i++){
+      var c = list[i];
       var dlat=(c[2]-lat)*rad, dlon=(c[3]-lon)*rad;
       var a = Math.sin(dlat/2)*Math.sin(dlat/2) + Math.cos(lat*rad)*Math.cos(c[2]*rad)*Math.sin(dlon/2)*Math.sin(dlon/2);
       var d = 6371*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
       if (d<bestD){bestD=d;best=c;}
     }
-    return {city:best, distanceKm:bestD};
+    return {place:best, distanceKm:bestD};
+  }
+  function nearestCity(lat, lon){
+    var r = nearestInList_(CITIES, lat, lon);
+    return {city:r.place, distanceKm:r.distanceKm};
   }
 
   function fmtCoord(lat, lon){
@@ -626,8 +673,11 @@
   }
   function locationLabel(lat, lon){
     var near = nearestCity(lat, lon);
-    if (near.city && near.distanceKm < 250) return "nabij " + near.city[0] + ", " + near.city[1];
-    if (near.city && near.distanceKm < 700) return "streek rond " + near.city[0] + ", " + near.city[1];
+    if (near.city && near.distanceKm < 50) return "nabij " + near.city[0] + ", " + near.city[1];
+    // Geen stad dichtbij: val terug op een brede streeknaam (steeds met land erbij),
+    // in plaats van kale coördinaten.
+    var reg = nearestInList_(REGIONS, lat, lon);
+    if (reg.place) return reg.place[0] + ", " + reg.place[1];
     return fmtCoord(lat, lon);
   }
 
@@ -1345,6 +1395,15 @@
   var phaseButtonsEl = document.getElementById("phaseButtons");
   var studentListEl = document.getElementById("studentList");
 
+  var fsBtnT = document.getElementById("fsBtnT");
+  fsBtnT.addEventListener("click", function(){
+    var goingFull = !mapWrapT.classList.contains("fullscreen");
+    mapWrapT.classList.toggle("fullscreen", goingFull);
+    document.body.classList.toggle("map-fullscreen", goingFull);
+    fsBtnT.textContent = goingFull ? "✕ Sluiten" : "⤢ Vergroten";
+    renderTeacherMap();
+  });
+
   function renderTeacherMap(){
     setupCanvas(mapCanvasT);
     var pins = [];
@@ -1496,6 +1555,12 @@
       html += '<button data-target="'+k.target+'" class="'+cls+'" '+((!reachable)?'disabled':'')+'>'+k.label+(isPast?' ✓':'')+'</button>';
     });
     html += '</div>';
+    if (state.fase === 4){
+      html += '<button class="btn secondary" id="reopenPlacementBtn" style="margin-top:12px;">↺ Plaatsing terug openzetten</button>';
+    }
+    if (state.fase >= 3){
+      html += '<button class="btn danger" id="clearUnitsBtn" style="margin-top:12px;margin-left:8px;">🗑 Alle geplaatste units wissen</button>';
+    }
     phaseButtonsEl.innerHTML = html;
     phaseButtonsEl.querySelectorAll("button[data-target]").forEach(function(btn){
       btn.addEventListener("click", function(){
@@ -1506,6 +1571,24 @@
           else { renderPhaseButtons(); alert("Mislukt: " + ((res&&res.error)||"onbekende fout")); }
         }).catch(function(){ renderPhaseButtons(); alert("Kon niet verbinden met de server."); });
       });
+    });
+    var reopenBtn = document.getElementById("reopenPlacementBtn");
+    if (reopenBtn) reopenBtn.addEventListener("click", function(){
+      if (!confirm("Plaatsing terug openzetten? Studenten kunnen hun unit dan opnieuw verplaatsen.")) return;
+      reopenBtn.disabled = true;
+      apiSubmit({action:"setFase", docent:docentCode, fase:3}).then(function(res){
+        reopenBtn.disabled = false;
+        if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
+      }).catch(function(){ reopenBtn.disabled = false; alert("Kon niet verbinden met de server."); });
+    });
+    var clearBtn = document.getElementById("clearUnitsBtn");
+    if (clearBtn) clearBtn.addEventListener("click", function(){
+      if (!confirm("Alle geplaatste units wissen? Dit verwijdert de locatie/klimaatzone van ALLE studenten (hun naam blijft bewaard). Dit kan niet ongedaan gemaakt worden.")) return;
+      clearBtn.disabled = true;
+      apiSubmit({action:"resetPlacements", docent:docentCode}).then(function(res){
+        clearBtn.disabled = false;
+        if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
+      }).catch(function(){ clearBtn.disabled = false; alert("Kon niet verbinden met de server."); });
     });
   }
 
