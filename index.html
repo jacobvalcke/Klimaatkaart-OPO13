@@ -1403,7 +1403,7 @@
     }
     lastKnownAnswerCount = currentAnswerCount;
 
-    var typingName = document.activeElement && document.activeElement.id === "regNaamInput";
+    var typingName = document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA");
     if (document.getElementById("view-student").classList.contains("active") && !typingName) renderStudentView();
     if (document.getElementById("view-docent").classList.contains("active") && state.isDocent) renderDocentView();
   });
@@ -1656,6 +1656,9 @@
 
   function debounce(fn, ms){ var t; return function(){ clearTimeout(t); var a=arguments; t=setTimeout(function(){fn.apply(null,a);}, ms); }; }
   window.addEventListener("resize", debounce(function(){
+    var typingNow = document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA");
+    if (typingNow) return; // op mobiel verandert de vensterhoogte al bij het openen van het toetsenbord —
+                            // zonder deze check werd het invoerveld dan meteen herbouwd en het typen onmogelijk
     if (viewStudent.classList.contains("active")) renderStudentView();
     if (viewDocent.classList.contains("active") && state.isDocent) renderTeacherMap();
   }, 120));
