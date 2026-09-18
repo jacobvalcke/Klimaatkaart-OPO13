@@ -184,7 +184,8 @@
   .btn.danger:hover{background:color-mix(in srgb, var(--warn) 12%, transparent);}
   .phasebtns{display:block;}
   .stepsgrid{display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;}
-  @media (max-width: 720px){ .stepsgrid{grid-template-columns:1fr 1fr;} }
+  .stepsgrid.cols3{grid-template-columns:repeat(3, 1fr);}
+  @media (max-width: 720px){ .stepsgrid{grid-template-columns:1fr 1fr;} .stepsgrid.cols3{grid-template-columns:1fr 1fr;} .stepsgrid.cols3 button:last-child{grid-column:1 / -1;} }
   .stepsgrid button{
     display:block; width:100%; text-align:center; padding:14px 10px; margin-bottom:0;
     border-radius:var(--radius-s); border:1.5px solid var(--border); background:var(--surface);
@@ -199,6 +200,8 @@
   .stepsgrid button.done{
     border-color:color-mix(in srgb, #2e7d32 40%, var(--border)); color:#2e7d32; opacity:.7;
   }
+  .stepsgrid button.danger-outline{border-color:var(--warn); color:var(--warn); background:var(--surface);}
+  .stepsgrid button.danger-outline:hover{background:color-mix(in srgb, var(--warn) 12%, transparent);}
 
   .status{font-size:14.5px;font-weight:600;padding:11px 13px;border-radius:var(--radius-s);margin-top:10px;display:none;}
   .status.show{display:block;}
@@ -368,11 +371,24 @@
           </div>
         </div>
       </div>
+
+      <div style="text-align:center;margin-top:20px;">
+        <button id="showQrBtn" type="button" style="background:none;border:none;padding:6px;font-size:12px;color:var(--text-muted);text-decoration:underline;cursor:pointer;">📱 Toon QR-code voor studenten</button>
+      </div>
     </div>
+  </div>
+
+  <div id="qrOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;align-items:center;justify-content:center;flex-direction:column;padding:24px;">
+    <div style="background:#fff;border-radius:16px;padding:32px;text-align:center;max-width:90vw;">
+      <div id="qrCodeBox"></div>
+      <p style="margin-top:16px;font-size:14px;color:#333;word-break:break-all;max-width:400px;" id="qrUrlText"></p>
+    </div>
+    <button id="closeQrBtn" type="button" style="margin-top:24px;background:var(--accent);color:#fff;border:none;border-radius:999px;padding:12px 28px;font-size:15px;cursor:pointer;">✕ Sluiten</button>
   </div>
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 (function(){
@@ -606,7 +622,10 @@
 ["Outback (centraal)","Australië",-25.0,133.5],["Outback (west)","Australië",-25.0,122.0],["Great Victoria-woestijn","Australië",-29.0,127.0],["Nullarbor-vlakte","Australië",-31.0,129.0],["Arnhemland","Australië",-13.0,133.5],
 ["Rocky Mountains","Verenigde Staten",43.0,-109.5],["Great Plains","Verenigde Staten",41.0,-100.0],["Mojavewoestijn","Verenigde Staten",35.5,-116.0],["Appalachen","Verenigde Staten",37.5,-81.5],["Prairies","Canada",52.0,-106.0],["Canadese Arctische eilanden","Canada",75.0,-95.0],["Boreale bosgordel","Canada",55.0,-120.0],["Alaska (binnenland)","Verenigde Staten",64.5,-153.0],
 ["Andes (centraal)","Peru",-10.0,-76.0],["Andes (noord)","Colombia",4.5,-74.5],["Orinocobekken","Venezuela",7.5,-66.0],["Guyana Hoogland","Guyana",4.5,-59.5],["Sertão","Brazilië",-9.0,-40.0],
-["Karpaten","Roemenië",45.6,25.3],["Balkangebergte","Bulgarije",42.7,25.0],["Centraal-Massief","Frankrijk",45.0,3.0],["Beierse Alpen","Duitsland",47.5,11.0],["Schotse Hooglanden","Verenigd Koninkrijk",57.2,-4.7],["Ardennen","België",50.2,5.6],["IJsland (binnenland)","IJsland",64.9,-18.5],["Groenland (ijskap)","Groenland",72.0,-40.0]
+["Karpaten","Roemenië",45.6,25.3],["Balkangebergte","Bulgarije",42.7,25.0],["Centraal-Massief","Frankrijk",45.0,3.0],["Beierse Alpen","Duitsland",47.5,11.0],["IJsland (binnenland)","IJsland",64.9,-18.5],["Groenland (ijskap)","Groenland",72.0,-40.0],
+["Schotse Hooglanden","Verenigd Koninkrijk",57.2,-4.7],["Zuidwest-Schotland","Verenigd Koninkrijk",55.2,-4.2],["Wales","Verenigd Koninkrijk",52.3,-3.7],["West Country","Verenigd Koninkrijk",50.8,-3.8],["East Anglia","Verenigd Koninkrijk",52.4,0.9],["Noord-Engeland","Verenigd Koninkrijk",54.5,-2.2],["Noord-Ierland","Verenigd Koninkrijk",54.6,-6.7],["Midlands","Verenigd Koninkrijk",52.5,-1.8],
+["Ardennen","België",50.2,5.6],["Haspengouw","België",50.7,5.2],["Polders","België",51.2,3.0],["Veluwe","Nederland",52.2,5.8],["Waddeneilanden","Nederland",53.3,5.3],["Bretagne (binnenland)","Frankrijk",48.2,-3.0],["Normandië","Frankrijk",49.1,0.4],["Provence","Frankrijk",43.9,5.7],["Elzas","Frankrijk",48.3,7.4],["Jura","Frankrijk",46.7,5.9],["Zwarte Woud","Duitsland",48.1,8.2],["Eifel","Duitsland",50.3,6.8],["Sauerland","Duitsland",51.2,8.1],["Pommeren","Duitsland",53.8,14.0],["Toscane","Italië",43.3,11.3],["Umbrië","Italië",42.9,12.6],["Apennijnen","Italië",42.5,13.6],["Sicilië (binnenland)","Italië",37.6,14.2],["Sardinië (binnenland)","Italië",40.1,9.1],["Galicië","Spanje",42.8,-7.9],["Extremadura","Spanje",39.3,-6.1],["Andalusië (binnenland)","Spanje",37.6,-4.5],["Aragón","Spanje",41.6,-0.9],["Alentejo","Portugal",38.4,-7.9],["Peloponnesos","Griekenland",37.5,22.2],["Transsylvanië","Roemenië",46.5,24.5],["Podlachië","Polen",53.1,23.1],["Mazurië","Polen",53.8,21.5],["Dalarna","Zweden",61.0,14.5],["Telemark","Noorwegen",59.4,8.0],["Botnische kust","Finland",63.5,22.0],
+["Cornwall","Verenigd Koninkrijk",50.4,-4.7]
   ];
 
   /* ===================== DATA: klimaatraster (Köppen-Geiger, vereenvoudigd) ===================== */
@@ -676,10 +695,11 @@
   function locationLabel(lat, lon){
     var near = nearestCity(lat, lon);
     if (near.city && near.distanceKm < 50) return "nabij " + near.city[0] + ", " + near.city[1];
-    // Geen stad dichtbij: val terug op een brede streeknaam (steeds met land erbij),
-    // in plaats van kale coördinaten.
+    // Geen stad dichtbij: val terug op een brede streeknaam (steeds met land erbij) —
+    // maar enkel als die ook echt in de buurt ligt. Anders is een verre, toevallig
+    // "minst-verre" streeknaam misleidender dan gewoon de coördinaten tonen.
     var reg = nearestInList_(REGIONS, lat, lon);
-    if (reg.place) return reg.place[0] + ", " + reg.place[1];
+    if (reg.place && reg.distanceKm < 400) return reg.place[0] + ", " + reg.place[1];
     return fmtCoord(lat, lon);
   }
 
@@ -1424,18 +1444,6 @@
 
   var OPTION_COLORS = ["#5b8def","#e8894a","#8a6fd6","#3fa77e","#d65f8a"];
 
-  function bindResetQuizBtn(){
-    var btn = document.getElementById("resetQuizBtn");
-    if (btn) btn.addEventListener("click", function(){
-      if (!confirm("Volledige vragenlijst herstarten? Dit wist ALLE ingezonden antwoorden van alle studenten, voor alle vragen, en sluit de vragenlijst. Dit kan niet ongedaan gemaakt worden.")) return;
-      btn.disabled = true;
-      apiSubmit({action:"resetQuiz", docent:docentCode}).then(function(res){
-        btn.disabled = false;
-        if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
-      }).catch(function(){ btn.disabled = false; alert("Kon niet verbinden met de server."); });
-    });
-  }
-
   var revealedQuestions = {}; // lokale (niet-gesynchroniseerde) UI-status: welke vragen toont de docent het antwoord van
   var overlopenActief = false;
   var overlopenIndex = 0;
@@ -1455,20 +1463,14 @@
         rows += '<div class="studentrow"><span>Vraag '+(i+1)+' — '+ZONES[q.zoneKey].naam+'</span><span>'+totalAnswersFor(i)+' antwoorden</span></div>';
       });
       docentQuizControl.innerHTML = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">Vragenlijst open — studenten doorlopen de vragen op eigen tempo.</div>'
-        + '<div style="max-height:260px;overflow:auto;margin-bottom:14px;">'+rows+'</div>'
-        + '<button class="btn danger" id="resetQuizBtn">↺ Vragenlijst herstarten</button>';
-      bindResetQuizBtn();
+        + '<div style="max-height:260px;overflow:auto;">'+rows+'</div>';
       return;
     }
 
     // Vragenlijst gesloten (nog niet geopend, of terug dichtgedaan).
     if (!overlopenActief){
       docentQuizControl.innerHTML = '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:8px;">Vragenlijst gesloten.</div>'
-        + '<div style="display:flex; gap:10px; flex-wrap:wrap;">'
-        + '<button class="btn secondary" id="toggleOverlopenBtn">Vragen overlopen</button>'
-        + '<button class="btn danger" id="resetQuizBtn">↺ Vragenlijst herstarten</button>'
-        + '</div>';
-      bindResetQuizBtn();
+        + '<button class="btn secondary" id="toggleOverlopenBtn">Vragen overlopen</button>';
       document.getElementById("toggleOverlopenBtn").addEventListener("click", function(){
         overlopenActief = true; overlopenIndex = 0; renderDocentQuizControl();
       });
@@ -1527,16 +1529,17 @@
   // zonder vaste volgorde — de docent bepaalt vrij wat wanneer open staat.
   function renderPhaseButtons(){
     var html = '<div style="font-size:11.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Vragenlijst — '+(state.quizOpen?'open':'gesloten')+'</div>'
-      + '<div class="stepsgrid" style="grid-template-columns:1fr 1fr;margin-bottom:16px;">'
-      + '<button id="quizStartBtn" class="'+(!state.quizOpen?'primary-next':'done')+'" '+(state.quizOpen?'disabled':'')+'>Start vragenlijst</button>'
-      + '<button id="quizStopBtn" class="'+(state.quizOpen?'primary-next':'')+'" '+(!state.quizOpen?'disabled':'')+'>Sluit vragenlijst af</button>'
+      + '<div class="stepsgrid cols3" style="margin-bottom:16px;">'
+      + '<button id="quizStartBtn" class="'+(!state.quizOpen?'primary-next':'done')+'" '+(state.quizOpen?'disabled':'')+'>Starten</button>'
+      + '<button id="quizStopBtn" class="'+(state.quizOpen?'primary-next':'')+'" '+(!state.quizOpen?'disabled':'')+'>Stoppen</button>'
+      + '<button id="quizResetBtn" class="danger-outline">↺ Resetten</button>'
       + '</div>'
       + '<div style="font-size:11.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Plaatsen van units — '+(state.placementOpen?'open':'gesloten')+'</div>'
-      + '<div class="stepsgrid" style="grid-template-columns:1fr 1fr;">'
-      + '<button id="placeStartBtn" class="'+(!state.placementOpen?'primary-next':'done')+'" '+(state.placementOpen?'disabled':'')+'>Start plaatsen van units</button>'
-      + '<button id="placeStopBtn" class="'+(state.placementOpen?'primary-next':'')+'" '+(!state.placementOpen?'disabled':'')+'>Sluit plaatsen van units af</button>'
-      + '</div>'
-      + '<button class="btn danger" id="clearUnitsBtn" style="margin-top:16px;">🗑 Alle geplaatste units wissen</button>';
+      + '<div class="stepsgrid cols3">'
+      + '<button id="placeStartBtn" class="'+(!state.placementOpen?'primary-next':'done')+'" '+(state.placementOpen?'disabled':'')+'>Starten</button>'
+      + '<button id="placeStopBtn" class="'+(state.placementOpen?'primary-next':'')+'" '+(!state.placementOpen?'disabled':'')+'>Stoppen</button>'
+      + '<button id="clearUnitsBtn" class="danger-outline">↺ Resetten</button>'
+      + '</div>';
     phaseButtonsEl.innerHTML = html;
 
     function bindToggle(id, action, open){
@@ -1554,14 +1557,21 @@
     bindToggle("placeStartBtn", "setPlacementOpen", true);
     bindToggle("placeStopBtn", "setPlacementOpen", false);
 
-    var clearBtn = document.getElementById("clearUnitsBtn");
-    clearBtn.addEventListener("click", function(){
-      if (!confirm("Alle geplaatste units wissen? Dit verwijdert de locatie/klimaatzone van ALLE studenten (hun naam blijft bewaard). Dit kan niet ongedaan gemaakt worden.")) return;
-      clearBtn.disabled = true;
-      apiSubmit({action:"resetPlacements", docent:docentCode}).then(function(res){
-        clearBtn.disabled = false;
+    document.getElementById("quizResetBtn").addEventListener("click", function(){
+      if (!confirm("Volledige vragenlijst herstarten? Dit wist ALLE ingezonden antwoorden van alle studenten, voor alle vragen, en sluit de vragenlijst. Dit kan niet ongedaan gemaakt worden.")) return;
+      var btn = this; btn.disabled = true;
+      apiSubmit({action:"resetQuiz", docent:docentCode}).then(function(res){
+        btn.disabled = false;
         if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
-      }).catch(function(){ clearBtn.disabled = false; alert("Kon niet verbinden met de server."); });
+      }).catch(function(){ btn.disabled = false; alert("Kon niet verbinden met de server."); });
+    });
+    document.getElementById("clearUnitsBtn").addEventListener("click", function(){
+      if (!confirm("Alle geplaatste units wissen? Dit verwijdert de locatie/klimaatzone van ALLE studenten (hun naam blijft bewaard). Dit kan niet ongedaan gemaakt worden.")) return;
+      var btn = this; btn.disabled = true;
+      apiSubmit({action:"resetPlacements", docent:docentCode}).then(function(res){
+        btn.disabled = false;
+        if (res && res.ok) pollOnce(); else alert("Mislukt: " + ((res&&res.error)||"onbekende fout"));
+      }).catch(function(){ btn.disabled = false; alert("Kon niet verbinden met de server."); });
     });
   }
 
@@ -1660,6 +1670,26 @@
       }
     });
   }
+
+  /* ===================== QR-code voor studenten ===================== */
+  var qrOverlay = document.getElementById("qrOverlay");
+  var qrCodeBox = document.getElementById("qrCodeBox");
+  var qrGenerated = false;
+  document.getElementById("showQrBtn").addEventListener("click", function(){
+    var cleanUrl = location.origin + location.pathname;
+    if (!qrGenerated){
+      new QRCode(qrCodeBox, { text: cleanUrl, width: 320, height: 320, correctLevel: QRCode.CorrectLevel.M });
+      qrGenerated = true;
+    }
+    document.getElementById("qrUrlText").textContent = cleanUrl;
+    qrOverlay.style.display = "flex";
+  });
+  document.getElementById("closeQrBtn").addEventListener("click", function(){
+    qrOverlay.style.display = "none";
+  });
+  qrOverlay.addEventListener("click", function(ev){
+    if (ev.target === qrOverlay) qrOverlay.style.display = "none";
+  });
 
   var resetIdentityLink = document.getElementById("resetIdentityLink");
   if (ownName){ resetIdentityLink.style.display = ""; }
