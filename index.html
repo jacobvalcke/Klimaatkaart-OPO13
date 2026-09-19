@@ -1604,7 +1604,7 @@
       }).catch(function(){ btn.disabled = false; alert("Kon niet verbinden met de server."); });
     });
     document.getElementById("clearUnitsBtn").addEventListener("click", function(){
-      if (!confirm("Volledige studentenlijst wissen? Dit verwijdert ALLE studenten (naam én geplaatste unit) volledig — geen enkel spoor blijft over, ook niet in de export. Dit kan niet ongedaan gemaakt worden.")) return;
+      if (!confirm("Volledige studentenlijst wissen? Dit verwijdert ALLE studenten (naam én geplaatste unit) volledig — geen enkel spoor blijft over, ook niet in de export. Het plaatsen wordt ook meteen afgesloten. Dit kan niet ongedaan gemaakt worden.")) return;
       var btn = this; btn.disabled = true;
       apiSubmit({action:"resetPlacements", docent:docentCode}).then(function(res){
         btn.disabled = false;
