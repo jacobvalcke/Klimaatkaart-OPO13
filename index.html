@@ -291,6 +291,17 @@
   .quizexplain.show{display:block;}
   .quizwaiting{text-align:center; color:var(--text-muted); font-size:14px; padding:40px 0;}
   .studentrow{display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:5px 0;}
+  .studentrow[data-slug]:hover{background:var(--surface-2);}
+  .studentrow.highlighted{background:color-mix(in srgb, var(--accent) 16%, transparent); border-radius:4px; font-weight:600;}
+  .pin-tooltip{
+    position:absolute; transform:translate(-50%,-100%); background:#1c1a17; color:#fff;
+    padding:5px 10px; border-radius:6px; font-size:12.5px; font-weight:600; white-space:nowrap;
+    pointer-events:none; box-shadow:0 2px 8px rgba(0,0,0,.3); z-index:5;
+  }
+  .pin-tooltip::after{
+    content:""; position:absolute; top:100%; left:50%; transform:translateX(-50%);
+    border:5px solid transparent; border-top-color:#1c1a17;
+  }
 
 </style>
 <body>
@@ -360,6 +371,7 @@
           <div class="mapwrap" id="mapwrapT" style="cursor:default;">
             <canvas id="mapCanvasT"></canvas>
             <button class="fsbtn" id="fsBtnT" type="button" aria-label="Volledig scherm">⤢ Vergroten</button>
+            <div id="teacherPinTooltip" class="pin-tooltip" style="display:none;"></div>
           </div>
           <div class="legend" id="legendT"></div>
         </div>
@@ -368,6 +380,7 @@
           <div id="studentList" style="font-size:12.5px;color:var(--text-muted);max-height:220px;overflow:auto;"></div>
           <div class="exportbtns">
             <button class="btn secondary" id="exportStudentenBtn" type="button">Exporteer studentenlijst (.xlsx)</button>
+            <button class="btn secondary" id="exportQuizBtn" type="button">Exporteer quizresultaten (.xlsx)</button>
           </div>
         </div>
       </div>
@@ -1011,9 +1024,18 @@
     deviceId = "dev-" + Math.random().toString(36).slice(2,10) + Date.now().toString(36);
     try { localStorage.setItem("klimaatkaart_device", deviceId); } catch(e){}
   }
-  var ownName = "", ownSlug = "";
+  var ownName = "";
   try { ownName = localStorage.getItem("klimaatkaart_naam") || ""; } catch(e){}
-  if (ownName) ownSlug = slugify(ownName);
+  // Eigen, uniek plaatsings-kenmerk per toestel — bewust NIET hetzelfde als
+  // deviceId (dat blijft uitsluitend voor de anonieme quizantwoorden) en ook
+  // NIET afgeleid van de naam (twee studenten met exact dezelfde volledige
+  // naam zouden anders elkaars geplaatste unit overschrijven).
+  var ownSlug = "";
+  try { ownSlug = localStorage.getItem("klimaatkaart_placement_id") || ""; } catch(e){}
+  if (!ownSlug){
+    ownSlug = "st-" + Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+    try { localStorage.setItem("klimaatkaart_placement_id", ownSlug); } catch(e){}
+  }
   var docentCode = "";
   try { docentCode = localStorage.getItem("klimaatkaart_docentcode") || ""; } catch(e){}
 
@@ -1244,16 +1266,23 @@
     if (state.placementOpen){
       mapHint.textContent = "tik op de kaart om je unit te plaatsen";
       if (!ownName){
-        sidePanel.innerHTML = '<div class="field"><label for="naamInput">Jouw naam</label>'
-          + '<input type="text" id="naamInput" maxlength="60" autocomplete="off"></div>'
-          + '<p style="font-size:12.5px;color:var(--text-muted);margin-top:8px;">Vul je naam in en tik daarna op de kaart om je unit te plaatsen.</p>'
+        sidePanel.innerHTML = '<div class="field"><label for="naamInput">Voor- en familienaam</label>'
+          + '<input type="text" id="naamInput" maxlength="60" autocomplete="off" placeholder="bv. Jan Peeters"></div>'
+          + '<p style="font-size:12.5px;color:var(--text-muted);margin-top:8px;">Nodig om je unit aan jou te kunnen koppelen. Vul in en bevestig, tik daarna op de kaart.</p>'
+          + '<button class="btn" id="confirmNameBtn" style="margin-top:10px;" disabled>Bevestig</button>'
           + '<div class="status" id="nameStatus"></div>';
-        document.getElementById("naamInput").addEventListener("keydown", function(ev){
-          if (ev.key === "Enter"){
-            var v = this.value.trim();
-            if (v){ ownName = v; ownSlug = slugify(v); try{localStorage.setItem("klimaatkaart_naam", v);}catch(e){} renderSidePanel(); }
-          }
-        });
+        var naamInputEl = document.getElementById("naamInput");
+        var confirmNameBtn = document.getElementById("confirmNameBtn");
+        naamInputEl.addEventListener("input", function(){ confirmNameBtn.disabled = naamInputEl.value.trim().length===0; });
+        function submitOwnName(){
+          var v = naamInputEl.value.trim();
+          if (!v) return;
+          ownName = v;
+          try{ localStorage.setItem("klimaatkaart_naam", v); }catch(e){}
+          renderSidePanel();
+        }
+        confirmNameBtn.addEventListener("click", submitOwnName);
+        naamInputEl.addEventListener("keydown", function(ev){ if (ev.key === "Enter" && !confirmNameBtn.disabled) submitOwnName(); });
         return;
       }
       var loc = pendingPlacement || (mine && mine.lat!=null ? {lat:mine.lat, lon:mine.lon, zoneKey:mine.zoneKey} : null);
@@ -1313,48 +1342,6 @@
       + '<p class="kenmerken" style="margin-top:10px;">Plaatsen van units is momenteel gesloten. Op de kaart zie je alle locaties van de klas; jouw unit is wit gemarkeerd.</p></div></div>';
   }
 
-  function renderRegistrationGate(){
-    quizPanel.style.display = "";
-    placementLayout.style.display = "none";
-    quizProgress.innerHTML = "";
-    quizQuestionEl.innerHTML = '<div class="quizquestion">'
-      + '<h2>Welkom</h2>'
-      + '<p style="color:var(--text-muted);font-size:13.5px;margin-bottom:14px;">Vul je naam in — dit is uitsluitend voor aanwezigheidsregistratie. Je antwoorden op de quiz blijven volledig anoniem en worden nergens aan je naam gekoppeld.</p>'
-      + '<div class="field"><label for="regNaamInput">Voor- en familienaam</label><input type="text" id="regNaamInput" maxlength="60" autocomplete="off" placeholder="bv. Jan Peeters"></div>'
-      + '<button class="btn" id="regConfirmBtn" style="margin-top:12px;" disabled>Bevestig</button>'
-      + '<div class="status" id="regStatus"></div>'
-      + '</div>';
-    var input = document.getElementById("regNaamInput");
-    var btn = document.getElementById("regConfirmBtn");
-    input.addEventListener("input", function(){ btn.disabled = input.value.trim().length===0; });
-    input.focus();
-    function submitName(){
-      var naam = input.value.trim();
-      if (!naam) return;
-      btn.disabled = true; btn.textContent = "Bezig...";
-      var slug = slugify(naam);
-      apiSubmit({action:"registerName", slug:slug, naam:naam}).then(function(res){
-        if (res && res.ok){
-          ownName = naam; ownSlug = slug;
-          try{ localStorage.setItem("klimaatkaart_naam", naam); }catch(e){}
-          renderStudentView();
-        } else {
-          var st = document.getElementById("regStatus");
-          st.textContent = "Registreren mislukt: " + ((res&&res.error)||"onbekende fout") + ". Probeer opnieuw.";
-          st.className = "status show warn";
-          btn.disabled = false; btn.textContent = "Bevestig";
-        }
-      }).catch(function(){
-        var st = document.getElementById("regStatus");
-        st.textContent = "Kon niet verbinden met de server. Probeer opnieuw.";
-        st.className = "status show warn";
-        btn.disabled = false; btn.textContent = "Bevestig";
-      });
-    }
-    btn.addEventListener("click", submitName);
-    input.addEventListener("keydown", function(ev){ if (ev.key === "Enter" && !btn.disabled) submitName(); });
-  }
-
   var activeStudentTab = null; // "quiz" of "placement" — door de student zelf te kiezen
   var studentSubTabs = document.getElementById("studentSubTabs");
   var subtabQuizBtn = document.getElementById("subtab-quiz");
@@ -1363,7 +1350,9 @@
   subtabPlacementBtn.addEventListener("click", function(){ activeStudentTab = "placement"; renderStudentView(); });
 
   function renderStudentView(){
-    if (!ownName){ studentSubTabs.style.display = "none"; renderRegistrationGate(); return; }
+    // Geen naam-verplichting meer om de quiz te bekijken/beantwoorden — dat gebeurt
+    // toch al volledig anoniem per toestel. Een naam wordt pas gevraagd op het
+    // moment dat iemand effectief een unit wil plaatsen (zie renderSidePanel).
     studentSubTabs.style.display = "inline-flex";
 
     if (activeStudentTab === null){
@@ -1430,16 +1419,65 @@
     renderTeacherMap();
   });
 
+  var namesVisible = false;         // "Toon namen" — staat standaard uit, wegens privacy
+  var highlightedStudentSlug = null; // welke unit licht op (via lijst-klik of kaart-tik)
+
   function renderTeacherMap(){
     setupCanvas(mapCanvasT);
     var pins = [];
     state.studenten.forEach(function(s){
-      if (s.lat!=null && s.lon!=null) pins.push({lat:s.lat, lon:s.lon, color: zoneColorVar(s.zoneKey)||"#ffffff"});
+      if (s.lat!=null && s.lon!=null) pins.push({lat:s.lat, lon:s.lon, color: zoneColorVar(s.zoneKey)||"#ffffff", slug:s.slug});
     });
-    drawMap(mapCanvasT, pins, null, null, teacherView);
+    var highlightPin = null;
+    if (highlightedStudentSlug){
+      var hs = state.studenten.filter(function(s){ return s.slug===highlightedStudentSlug && s.lat!=null; })[0];
+      if (hs) highlightPin = {lat:hs.lat, lon:hs.lon};
+    }
+    drawMap(mapCanvasT, pins, highlightPin, "#ffd54f", teacherView);
     positionOverlays(mapWrapT, mapCanvasT);
   }
-  attachMapInteractions(mapCanvasT, teacherView, { onChange: renderTeacherMap });
+
+  function teacherPinToScreen(lat, lon){
+    var half = 0.5/teacherView.scale;
+    var left = teacherView.cx-half, top = teacherView.cy-half, size = 2*half;
+    var fx = (lon+180)/360, fy = (90-lat)/180;
+    var rect = mapCanvasT.getBoundingClientRect();
+    return { x: rect.left + (fx-left)/size*rect.width, y: rect.top + (fy-top)/size*rect.height };
+  }
+  function teacherHitTest(clientX, clientY){
+    var best=null, bestDist=Infinity;
+    state.studenten.forEach(function(s){
+      if (s.lat==null || s.lon==null) return;
+      var xy = teacherPinToScreen(s.lat, s.lon);
+      var d = Math.hypot(xy.x-clientX, xy.y-clientY);
+      if (d<bestDist){ bestDist=d; best=s; }
+    });
+    return (best && bestDist < 22) ? best : null;
+  }
+  function showPinTooltip(student){
+    var xy = teacherPinToScreen(student.lat, student.lon);
+    var rect = mapWrapT.getBoundingClientRect();
+    var tip = document.getElementById("teacherPinTooltip");
+    tip.textContent = student.naam;
+    tip.style.left = (xy.x-rect.left) + "px";
+    tip.style.top = (xy.y-rect.top-14) + "px";
+    tip.style.display = "block";
+  }
+  function hidePinTooltip(){
+    var tip = document.getElementById("teacherPinTooltip");
+    if (tip) tip.style.display = "none";
+  }
+
+  attachMapInteractions(mapCanvasT, teacherView, {
+    onChange: function(){ renderTeacherMap(); hidePinTooltip(); },
+    onTap: function(x,y){
+      var hit = teacherHitTest(x,y);
+      highlightedStudentSlug = hit ? hit.slug : null;
+      renderTeacherMap();
+      renderStudentList();
+      if (hit && namesVisible) showPinTooltip(hit); else hidePinTooltip();
+    }
+  });
   addZoomButtons(mapWrapT, teacherView, renderTeacherMap);
 
   var OPTION_COLORS = ["#5b8def","#e8894a","#8a6fd6","#3fa77e","#d65f8a"];
@@ -1576,15 +1614,40 @@
   }
 
   function renderStudentList(){
-    // Bewust GEEN namen op het scherm (enkel in de exportbare Excel-lijst) —
-    // dit overzicht kan geprojecteerd worden zonder studenten te identificeren.
+    // Namen staan standaard uit (privacy) — enkel zichtbaar na expliciete klik
+    // op "Toon namen" door de docent, en altijd wel volledig in de Excel-export.
     var placed = state.studenten.filter(function(s){ return s.lat!=null; });
-    if (!placed.length){ studentListEl.innerHTML = '<p>Nog geen units geplaatst.</p>'; return; }
-    studentListEl.innerHTML = '<p style="margin-bottom:8px;">'+placed.length+' van '+state.studenten.length+' studenten hebben een unit geplaatst.</p>'
+    var toggleBtn = '<button class="btn secondary" id="toggleNamesBtn" style="margin-bottom:10px;width:100%;">'
+      + (namesVisible ? '🙈 Verberg namen' : '👁 Toon namen') + '</button>';
+    if (!placed.length){
+      studentListEl.innerHTML = toggleBtn + '<p>Nog geen units geplaatst.</p>';
+      document.getElementById("toggleNamesBtn").addEventListener("click", toggleNamesVisible);
+      return;
+    }
+    studentListEl.innerHTML = toggleBtn
+      + '<p style="margin-bottom:8px;">'+placed.length+' van '+state.studenten.length+' studenten hebben een unit geplaatst.</p>'
       + placed.map(function(s, i){
         var zn = s.zoneKey ? ((ZONES[s.zoneKey]||{}).naam || s.zoneKey) : "—";
-        return '<div class="studentrow"><span>Student '+(i+1)+'</span><span>'+zn+(s.locatie?(' · '+escapeHtml(s.locatie)):'')+'</span></div>';
+        var label = namesVisible ? escapeHtml(s.naam) : ("Student "+(i+1));
+        var isHi = highlightedStudentSlug === s.slug;
+        return '<div class="studentrow'+(isHi?' highlighted':'')+'" data-slug="'+s.slug+'">'
+          + '<span>'+label+'</span><span>'+zn+(s.locatie?(' · '+escapeHtml(s.locatie)):'')+'</span></div>';
       }).join("");
+    document.getElementById("toggleNamesBtn").addEventListener("click", toggleNamesVisible);
+    studentListEl.querySelectorAll(".studentrow[data-slug]").forEach(function(row){
+      row.addEventListener("click", function(){
+        var slug = row.getAttribute("data-slug");
+        highlightedStudentSlug = (highlightedStudentSlug === slug) ? null : slug;
+        hidePinTooltip();
+        renderStudentList();
+        renderTeacherMap();
+      });
+    });
+  }
+  function toggleNamesVisible(){
+    namesVisible = !namesVisible;
+    hidePinTooltip();
+    renderStudentList();
   }
 
   function renderDocentView(){
@@ -1633,6 +1696,19 @@
       rows.push([s.naam||"", zn, s.locatie||"", s.lat!=null?s.lat:"", s.lon!=null?s.lon:""]);
     });
     downloadXlsx("klimaatkaart-studenten-"+(new Date().toISOString().slice(0,10))+".xlsx", rows);
+  });
+  document.getElementById("exportQuizBtn").addEventListener("click", function(){
+    var rows = [["Vraag nr.","Klimaatzone","Vraag","Optie","Aantal antwoorden","Percentage","Correct?"]];
+    QUESTIONS.forEach(function(q, i){
+      var counts = (state.resultaten && state.resultaten[i]) || {};
+      var totalVotes = Object.keys(counts).reduce(function(s,k){return s+counts[k];},0);
+      q.opties.forEach(function(opt, oi){
+        var c = counts[oi] || 0;
+        var pct = totalVotes ? Math.round((c/totalVotes)*1000)/10 : 0;
+        rows.push([i+1, ZONES[q.zoneKey].naam, q.vraag, LETTERS[oi]+". "+opt, c, pct, oi===q.correct ? "Ja" : ""]);
+      });
+    });
+    downloadXlsx("klimaatkaart-quizresultaten-"+(new Date().toISOString().slice(0,10))+".xlsx", rows);
   });
 
   /* ===================== tabs ===================== */
@@ -1701,6 +1777,7 @@
     try{
       localStorage.removeItem("klimaatkaart_naam");
       localStorage.removeItem("klimaatkaart_device");
+      localStorage.removeItem("klimaatkaart_placement_id");
     }catch(e){}
     location.reload();
   });
